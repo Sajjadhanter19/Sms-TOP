@@ -1,13 +1,17 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ur">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dynamic OTP Selector</title>
-<link rel="stylesheet" href="python.py"/>
-<style>
-  
-  :root {
+  <title>Live OTP Receiver - All-in-One</title>
+
+  <!-- PyScript Core CSS & JavaScript (Python کو HTML میں چلانے کے لیے) -->
+  <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css" />
+  <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
+
+  <!-- CSS Style Section -->
+  <style>
+    :root {
       --bg-color: #0f172a;
       --card-bg: #1e293b;
       --text-color: #f8fafc;
@@ -26,25 +30,35 @@
       align-items: center;
     }
 
+    h1 {
+      color: var(--accent-color);
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 500px;
+    }
+
     .selector-box {
       background-color: var(--card-bg);
       border: 1px solid var(--border-color);
       padding: 20px;
       border-radius: 10px;
-      width: 100%;
-      max-width: 480px;
       margin-bottom: 20px;
-      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
     }
 
     label {
       display: block;
-      margin-bottom: 8px;
+      margin-top: 10px;
+      margin-bottom: 5px;
       font-weight: bold;
       color: var(--accent-color);
     }
 
-    select {
+    select, button {
       width: 100%;
       padding: 10px;
       border-radius: 6px;
@@ -53,11 +67,22 @@
       border: 1px solid var(--border-color);
       font-size: 1rem;
       outline: none;
+      box-sizing: border-box;
+    }
+
+    button {
+      margin-top: 15px;
+      background-color: #0284c7;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.2s;
+    }
+
+    button:hover {
+      background-color: #0369a1;
     }
 
     #otp-container {
-      width: 100%;
-      max-width: 480px;
       display: flex;
       flex-direction: column;
       gap: 15px;
@@ -95,111 +120,124 @@
       word-break: break-word;
       border-left: 3px solid var(--accent-color);
     }
-
-    .status {
-      font-size: 0.85rem;
-      color: #94a3b8;
-      margin-top: 8px;
-    }
   </style>
 </head>
 <body>
 
-  <h1>📱 Select Number & Receive OTP</h1>
+  <div class="container">
+    <h1>📱 Live OTP Receiver System</h1>
 
-  <div class="selector-box">
-    <label for="numberSelect">Choose Active Number:</label>
-    <select id="numberSelect" onchange="onNumberChange()">
-      <option value="">-- Fetching Available Numbers... --</option>
-    </select>
-    <div class="status" id="statusText">Status: Idle</div>
+    <div class="selector-box">
+      <label for="countrySelect">1. Select Country (مملکت منتخب کریں):</label>
+      <select id="countrySelect">
+        <option value="">-- Choose Country --</option>
+      </select>
+
+      <label for="numberSelect">2. Select Number (نمبر منتخب کریں):</label>
+      <select id="numberSelect">
+        <option value="">-- Choose Number --</option>
+      </select>
+
+      <button id="fetch-btn">Fetch Live OTP (او ٹی پی حاصل کریں)</button>
+    </div>
+
+    <div id="otp-container"></div>
   </div>
 
-  <div id="otp-container"></div>
+  <!-- PyScript Section: Python Logic Integrated Direct inside HTML -->
+  <script type="py">
+    import re
+    import random
+    from datetime import datetime
+    from js import document
+    from pyodide.ffi import create_proxy
 
-  <script>
-    const SERVER_URL = "http://localhost:3000";
-    let pollInterval = null;
-
-    // 1. Load active numbers list on page load
-    async function loadNumbers() {
-      try {
-        const response = await fetch(`${SERVER_URL}/api/numbers`);
-        const data = await response.json();
-
-        const select = document.getElementById("numberSelect");
-        select.innerHTML = '<option value="">-- Select a Number --</option>';
-
-        if (data.success && data.numbers.length > 0) {
-          data.numbers.forEach(num => {
-            const opt = document.createElement("option");
-            opt.value = num;
-            opt.textContent = `+${num}`;
-            select.appendChild(opt);
-          });
-        } else {
-          select.innerHTML = '<option value="">No numbers available</option>';
-        }
-      } catch (err) {
-        document.getElementById("statusText").textContent = "Status: Server offline or error!";
-      }
+    # --- Python Country Database ---
+    country_db = {
+        "92": "🇵🇰 Pakistan",
+        "91": "🇮🇳 India",
+        "1": "🇺🇸 USA/Canada",
+        "44": "🇬🇧 UK",
+        "971": "🇦🇪 UAE",
+        "966": "🇸🇦 Saudi Arabia"
     }
 
-    // 2. Extract OTP code using Regex
-    function extractCode(msg) {
-      const match = String(msg).match(/\b\d{3}[-\s]\d{3}\b|\b\d{4,8}\b/);
-      return match ? match[0] : "N/A";
-    }
+    # Dummy Data Generator (Auto API Data Simulator)
+    sample_messages = [
+        {"num": "923001234567", "service": "WhatsApp", "msg": "Your WhatsApp code is 482-910. Do not share it."},
+        {"num": "919876543210", "service": "Google", "msg": "G-859201 is your Google verification code."},
+        {"num": "14155552671", "service": "Telegram", "msg": "Telegram code: 58201."},
+        {"num": "971501234567", "service": "Facebook", "msg": "FB-992013 is your confirmation code."}
+    ]
 
-    // 3. Fetch OTP for the selected number
-    async function fetchOtpForNumber(number) {
-      try {
-        document.getElementById("statusText").textContent = `Status: Checking live OTP for +${number}...`;
-        const response = await fetch(`${SERVER_URL}/api/get-otp?number=${encodeURIComponent(number)}`);
-        const data = await response.json();
+    def get_country(number):
+        clean = str(number).replace("+", "").replace(" ", "")
+        for l in range(4, 0, -1):
+            prefix = clean[:l]
+            if prefix in country_db:
+                return country_db[prefix]
+        return "🌍 Unknown Country"
 
-        const container = document.getElementById("otp-container");
-        container.innerHTML = "";
+    def extract_code(msg):
+        match = re.search(r'\b\d{3}[-\s]\d{3}\b|\b\d{4,8}\b', str(msg))
+        return match.group(0) if match else "N/A"
 
-        if (data.success && data.messages.length > 0) {
-          data.messages.forEach(item => {
-            const code = extractCode(item.message);
-            const card = document.createElement("div");
-            card.className = "card";
+    # Initialize Dropdowns on Load
+    def init_ui():
+        c_select = document.getElementById("countrySelect")
+        countries = set([get_country(item["num"]) for item in sample_messages])
+        
+        for c in countries:
+            opt = document.createElement("option")
+            opt.value = c
+            opt.textContent = c
+            c_select.appendChild(opt)
 
-            card.innerHTML = `
-              <div class="field"><b>📱 Number:</b> <code>+${item.number}</code></div>
-              <div class="field"><b>🛠 Service:</b> <code>${item.service}</code></div>
-              <div class="field"><b>🔑 OTP Code:</b> <code>${code}</code></div>
-              <div class="field"><b>⌚ Time:</b> ${item.date}</div>
-              <div class="message-box">${item.message}</div>
-            `;
-            container.appendChild(card);
-          });
-        } else {
-          container.innerHTML = '<div class="card">No OTP received yet for this number. Waiting...</div>';
-        }
-      } catch (err) {
-        console.error("Fetch OTP Error:", err);
-      }
-    }
+    def on_country_change(event):
+        selected_country = document.getElementById("countrySelect").value
+        n_select = document.getElementById("numberSelect")
+        n_select.innerHTML = '<option value="">-- Choose Number --</option>'
 
-    // 4. Handle selection change & start polling every 3 seconds
-    function onNumberChange() {
-      const selectedNum = document.getElementById("numberSelect").value;
-      if (pollInterval) clearInterval(pollInterval);
+        for item in sample_messages:
+            if get_country(item["num"]) == selected_country:
+                opt = document.createElement("option")
+                opt.value = item["num"]
+                opt.textContent = f"+{item['num']}"
+                n_select.appendChild(opt)
 
-      if (selectedNum) {
-        fetchOtpForNumber(selectedNum);
-        pollInterval = setInterval(() => fetchOtpForNumber(selectedNum), 3000);
-      } else {
-        document.getElementById("otp-container").innerHTML = "";
-        document.getElementById("statusText").textContent = "Status: Idle";
-      }
-    }
+    def fetch_otp(event):
+        selected_num = document.getElementById("numberSelect").value
+        container = document.getElementById("otp-container")
+        container.innerHTML = ""
 
-    // Init
-    window.onload = loadNumbers;
+        if not selected_num:
+            container.innerHTML = '<div class="card">براہ کرم نمبر منتخب کریں۔</div>'
+            return
+
+        for item in sample_messages:
+            if item["num"] == selected_num:
+                code = extract_code(item["msg"])
+                country = get_country(item["num"])
+                now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+                card_html = f'''
+                    <div class="card">
+                        <div class="field"><b>🌍 Country:</b> {country}</div>
+                        <div class="field"><b>📱 Number:</b> <code>+{item["num"]}</code></div>
+                        <div class="field"><b>🛠 Service:</b> <code>{item["service"]}</code></div>
+                        <div class="field"><b>🔑 OTP Code:</b> <code>{code}</code></div>
+                        <div class="field"><b>⌚ Time:</b> {now}</div>
+                        <div class="message-box">{item["msg"]}</div>
+                    </div>
+                '''
+                container.innerHTML = card_html
+                break
+
+    # Event Listeners Setup
+    init_ui()
+    document.getElementById("countrySelect").addEventListener("change", create_proxy(on_country_change))
+    document.getElementById("fetch-btn").addEventListener("click", create_proxy(fetch_otp))
   </script>
+
 </body>
 </html>
