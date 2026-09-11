@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Live OTP Receiver - All-in-One</title>
+  <title>Live OTP Receiver - Dynamic API Integrated</title>
 
-  <!-- PyScript Core CSS & JavaScript (Python کو HTML میں چلانے کے لیے) -->
+  <!-- PyScript Core CSS & JavaScript -->
   <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css" />
   <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
 
@@ -82,6 +82,13 @@
       background-color: #0369a1;
     }
 
+    #status-text {
+      font-size: 0.85rem;
+      color: #94a3b8;
+      margin-top: 10px;
+      text-align: center;
+    }
+
     #otp-container {
       display: flex;
       flex-direction: column;
@@ -130,15 +137,16 @@
     <div class="selector-box">
       <label for="countrySelect">1. Select Country (مملکت منتخب کریں):</label>
       <select id="countrySelect">
-        <option value="">-- Choose Country --</option>
+        <option value="">-- Loading API Data... --</option>
       </select>
 
       <label for="numberSelect">2. Select Number (نمبر منتخب کریں):</label>
       <select id="numberSelect">
-        <option value="">-- Choose Number --</option>
+        <option value="">-- Select Country First --</option>
       </select>
 
       <button id="fetch-btn">Fetch Live OTP (او ٹی پی حاصل کریں)</button>
+      <div id="status-text">Status: Fetching live API data...</div>
     </div>
 
     <div id="otp-container"></div>
@@ -147,28 +155,34 @@
   <!-- PyScript Section: Python Logic Integrated Direct inside HTML -->
   <script type="py">
     import re
-    import random
     from datetime import datetime
     from js import document
     from pyodide.ffi import create_proxy
+    from pyodide.http import pyfetch
+
+    # --- API CONFIGURATION ---
+    API1_URL   = "http://147.135.212.197/crapi/st/viewstats?token=SE5XREZBUzRfTpVnX2dQh3NQcYB2dZBWQ4JpXVxmblp2alCDi25oZg=="
+    API2_URL   = "http://147.135.212.197/crapi/st/viewstats?token=RVdWRElBUzRGcW9WeneNcmd2cGV9ZJd8e29PVlyPcFxeamxSgWVXfw=="
+    API3_URL   = "https://pscall.net/restapi/smsreport?key=SFNYSj1SS16DgYdyf4KIgA==&start=0&length=30"
 
     # --- Python Country Database ---
     country_db = {
-        "92": "🇵🇰 Pakistan",
-        "91": "🇮🇳 India",
-        "1": "🇺🇸 USA/Canada",
-        "44": "🇬🇧 UK",
-        "971": "🇦🇪 UAE",
-        "966": "🇸🇦 Saudi Arabia"
+        "1":"🇺🇸 USA/Canada","93":"🇦🇫 Afghanistan","355":"🇦🇱 Albania","213":"🇩🇿 Algeria",
+        "54":"🇦🇷 Argentina","61":"🇦🇺 Australia","43":"🇦🇹 Austria","994":"🇦🇿 Azerbaijan",
+        "880":"🇧🇩 Bangladesh","32":"🇧🇪 Belgium","55":"🇧🇷 Brazil","86":"🇨🇳 China",
+        "20":"🇪🇬 Egypt","33":"🇫🇷 France","49":"🇩🇪 Germany","91":"🇮🇳 India",
+        "62":"🇮🇩 Indonesia","98":"🇮🇷 Iran","964":"🇮🇶 Iraq","39":"🇮🇹 Italy",
+        "81":"🇯🇵 Japan","962":"🇯🇴 Jordan","254":"🇰🇪 Kenya","965":"🇰🇼 Kuwait",
+        "60":"🇲🇾 Malaysia","52":"🇲🇽 Mexico","31":"🇳🇱 Netherlands","92":"🇵🇰 Pakistan",
+        "970":"🇵🇸 Palestine","63":"🇵🇭 Philippines","48":"🇵🇱 Poland","351":"🇵🇹 Portugal",
+        "974":"🇶🇦 Qatar","7":"🇷🇺 Russia","966":"🇸🇦 Saudi Arabia","65":"🇸🇬 Singapore",
+        "27":"🇿🇦 South Africa","82":"🇰🇷 South Korea","34":"🇪🇸 Spain","94":"🇱🇰 Sri Lanka",
+        "46":"🇸🇪 Sweden","41":"🇨🇭 Switzerland","886":"🇹🇼 Taiwan","66":"🇹🇭 Thailand",
+        "90":"🇹🇷 Turkey","971":"🇦🇪 UAE","44":"🇬🇧 UK","84":"🇻🇳 Vietnam","967":"🇾🇪 Yemen"
     }
 
-    # Dummy Data Generator (Auto API Data Simulator)
-    sample_messages = [
-        {"num": "923001234567", "service": "WhatsApp", "msg": "Your WhatsApp code is 482-910. Do not share it."},
-        {"num": "919876543210", "service": "Google", "msg": "G-859201 is your Google verification code."},
-        {"num": "14155552671", "service": "Telegram", "msg": "Telegram code: 58201."},
-        {"num": "971501234567", "service": "Facebook", "msg": "FB-992013 is your confirmation code."}
-    ]
+    # Global storage for fetched API messages
+    api_messages = []
 
     def get_country(number):
         clean = str(number).replace("+", "").replace(" ", "")
@@ -176,16 +190,80 @@
             prefix = clean[:l]
             if prefix in country_db:
                 return country_db[prefix]
-        return "🌍 Unknown Country"
+        return "🌍 Other Countries"
 
     def extract_code(msg):
         match = re.search(r'\b\d{3}[-\s]\d{3}\b|\b\d{4,8}\b', str(msg))
         return match.group(0) if match else "N/A"
 
-    # Initialize Dropdowns on Load
-    def init_ui():
+    # Async function to fetch data directly from APIs
+    async def fetch_api_data():
+        global api_messages
+        api_messages = []
+        status = document.getElementById("status-text")
+        status.textContent = "Status: Fetching data from APIs..."
+
+        # API 1
+        try:
+            res1 = await pyfetch(API1_URL)
+            if res1.ok:
+                data1 = await res1.json()
+                if isinstance(data1, list):
+                    for row in data1:
+                        api_messages.append({
+                            "service": row[0] or "Unknown",
+                            "num": str(row[1] or ""),
+                            "msg": row[2] or "",
+                            "date": row[3] or ""
+                        })
+        except Exception as e:
+            print("API 1 Error:", e)
+
+        # API 2
+        try:
+            res2 = await pyfetch(API2_URL)
+            if res2.ok:
+                data2 = await res2.json()
+                if isinstance(data2, list):
+                    for row in data2:
+                        api_messages.append({
+                            "service": row[0] or "Unknown",
+                            "num": str(row[1] or ""),
+                            "msg": row[2] or "",
+                            "date": row[3] or ""
+                        })
+        except Exception as e:
+            print("API 2 Error:", e)
+
+        # API 3
+        try:
+            res3 = await pyfetch(API3_URL)
+            if res3.ok:
+                data3 = await res3.json()
+                if data3.get("result") == "success" and isinstance(data3.get("data"), list):
+                    for item in data3.get("data"):
+                        api_messages.append({
+                            "service": item.get("cli", "Unknown"),
+                            "num": str(item.get("num", "")),
+                            "msg": item.get("sms", ""),
+                            "date": item.get("dateadded", "")
+                        })
+        except Exception as e:
+            print("API 3 Error:", e)
+
+        populate_countries()
+
+    # Populate Country Dropdown based on API numbers
+    def populate_countries():
         c_select = document.getElementById("countrySelect")
-        countries = set([get_country(item["num"]) for item in sample_messages])
+        status = document.getElementById("status-text")
+        c_select.innerHTML = '<option value="">-- Choose Country --</option>'
+
+        if not api_messages:
+            status.textContent = "Status: No numbers fetched or CORS error."
+            return
+
+        countries = sorted(list(set([get_country(item["num"]) for item in api_messages if len(item["num"]) > 5])))
         
         for c in countries:
             opt = document.createElement("option")
@@ -193,17 +271,27 @@
             opt.textContent = c
             c_select.appendChild(opt)
 
+        status.textContent = f"Status: Loaded {len(api_messages)} messages successfully!"
+
     def on_country_change(event):
         selected_country = document.getElementById("countrySelect").value
         n_select = document.getElementById("numberSelect")
         n_select.innerHTML = '<option value="">-- Choose Number --</option>'
 
-        for item in sample_messages:
-            if get_country(item["num"]) == selected_country:
-                opt = document.createElement("option")
-                opt.value = item["num"]
-                opt.textContent = f"+{item['num']}"
-                n_select.appendChild(opt)
+        if not selected_country:
+            return
+
+        # Filter numbers matching selected country
+        filtered_numbers = sorted(list(set([
+            item["num"] for item in api_messages 
+            if get_country(item["num"]) == selected_country and len(item["num"]) > 5
+        ])))
+
+        for num in filtered_numbers:
+            opt = document.createElement("option")
+            opt.value = num
+            opt.textContent = f"+{num}"
+            n_select.appendChild(opt)
 
     def fetch_otp(event):
         selected_num = document.getElementById("numberSelect").value
@@ -214,11 +302,14 @@
             container.innerHTML = '<div class="card">براہ کرم نمبر منتخب کریں۔</div>'
             return
 
-        for item in sample_messages:
-            if item["num"] == selected_num:
+        # Show all OTP messages for selected number
+        matched_messages = [item for item in api_messages if str(item["num"]) == str(selected_num)]
+
+        if matched_messages:
+            for item in matched_messages:
                 code = extract_code(item["msg"])
                 country = get_country(item["num"])
-                now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                date_str = item["date"] or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
                 card_html = f'''
                     <div class="card">
@@ -226,17 +317,21 @@
                         <div class="field"><b>📱 Number:</b> <code>+{item["num"]}</code></div>
                         <div class="field"><b>🛠 Service:</b> <code>{item["service"]}</code></div>
                         <div class="field"><b>🔑 OTP Code:</b> <code>{code}</code></div>
-                        <div class="field"><b>⌚ Time:</b> {now}</div>
+                        <div class="field"><b>⌚ Time:</b> {date_str}</div>
                         <div class="message-box">{item["msg"]}</div>
                     </div>
                 '''
-                container.innerHTML = card_html
-                break
+                container.innerHTML += card_html
+        else:
+            container.innerHTML = '<div class="card">کوئی پیغام موصول نہیں ہوا۔</div>'
 
-    # Event Listeners Setup
-    init_ui()
+    # Setup Event Listeners and Init Data
     document.getElementById("countrySelect").addEventListener("change", create_proxy(on_country_change))
     document.getElementById("fetch-btn").addEventListener("click", create_proxy(fetch_otp))
+
+    # Trigger async API fetch on load
+    import asyncio
+    asyncio.ensure_future(fetch_api_data())
   </script>
 
 </body>
