@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Live OTP Receiver - Dynamic All APIs</title>
+  <title>Live OTP Receiver - 5 Sec Auto Fetch</title>
 
   <!-- PyScript Core CSS & JavaScript -->
   <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css" />
@@ -146,7 +146,7 @@
       </select>
 
       <button id="fetch-btn">Fetch Live OTP (او ٹی پی حاصل کریں)</button>
-      <div id="status-text">🔄 Fetching real-time APIs...</div>
+      <div id="status-text">🔄 Initializing 5-second auto sync...</div>
     </div>
 
     <div id="otp-container"></div>
@@ -156,8 +156,9 @@
   <script type="py">
     import re
     import json
+    import asyncio
     from datetime import datetime
-    from js import document, fetch, window
+    from js import document, fetch
     from pyodide.ffi import create_proxy
 
     # --- ALL 4 APIs CONFIGURATION ---
@@ -166,14 +167,14 @@
     API_LIST = [
         PROX + "http://147.135.212.197/crapi/st/viewstats?token=SE5XREZBUzRfTpVnX2dQh3NQcYB2dZBWQ4JpXVxmblp2alCDi25oZg==",
         PROX + "http://147.135.212.197/crapi/st/viewstats?token=RVdWRElBUzRGcW9WeneNcmd2cGV9ZJd8e29PVlyPcFxeamxSgWVXfw==",
-        PROX + "http://147.135.212.197/crapi/had/viewstats?token=SVVSRzRSQmhXkYuBilFrR2iVZoldZ1dfX4N4WGeHhHdmdFhphYZw==", # NEW API ADDED
+        PROX + "http://147.135.212.197/crapi/had/viewstats?token=SVVSRzRSQmhXkYuBilFrR2iVZoldZ1dfX4N4WGeHhHdmdFhphYZw==",
         "https://pscall.net/restapi/smsreport?key=SFNYSj1SS16DgYdyf4KIgA==&start=0&length=50"
     ]
 
-    # --- Dynamic Country Code Database ---
+    # Dynamic Country Code Database
     country_db = {
         "1":"🇺🇸 USA/Canada","93":"🇦🇫 Afghanistan","355":"🇦🇱 Albania","213":"🇩🇿 Algeria",
-        "54":"🇦🇷 Argentina","61":"🇦🇺 Australia","43":"🇦🇹 Austria","994":"🇦🇿 Azerbaijan",
+        "54":"🇦🇷 Argentina","61":"🇦🇺 Australia","43":"🇦TF Austria","994":"🇦🇿 Azerbaijan",
         "880":"🇧🇩 Bangladesh","32":"🇧🇪 Belgium","55":"🇧🇷 Brazil","86":"🇨🇳 China",
         "20":"🇪🇬 Egypt","33":"🇫🇷 France","49":"🇩🇪 Germany","91":"🇮🇳 India",
         "62":"🇮🇩 Indonesia","98":"🇮🇷 Iran","964":"🇮🇶 Iraq","39":"🇮🇹 Italy",
@@ -206,7 +207,6 @@
             text = await response.text()
             data = json.loads(text)
 
-            # Standard format checking
             if isinstance(data, list):
                 for row in data:
                     if len(row) >= 3:
@@ -225,38 +225,45 @@
                         "date": item.get("dateadded", "")
                     })
         except Exception as e:
-            print("Fetch Error:", e)
+            pass
 
     async def fetch_all_data():
         global api_messages
         api_messages = []
-        status = document.getElementById("status-text")
-        status.textContent = "🔄 Loading Data from 4 APIs..."
 
         for url in API_LIST:
             await fetch_single_api(url)
 
-        populate_countries()
+        update_ui()
 
-    def populate_countries():
+    def update_ui():
         c_select = document.getElementById("countrySelect")
         status = document.getElementById("status-text")
-        c_select.innerHTML = '<option value="">-- Choose Country --</option>'
+        
+        current_country = c_select.value
 
         if not api_messages:
-            status.textContent = "❌ No numbers returned from APIs!"
+            status.textContent = "❌ No data from APIs. Retrying in 5s..."
             return
 
-        # Extract unique dynamic countries from fetched numbers
+        # Extract unique dynamic countries
         countries = sorted(list(set([get_country(item["num"]) for item in api_messages if len(item["num"]) > 5])))
         
-        for c in countries:
-            opt = document.createElement("option")
-            opt.value = c
-            opt.textContent = c
-            c_select.appendChild(opt)
+        # Populate country select if empty
+        if len(c_select.options) <= 1 or not current_country:
+            c_select.innerHTML = '<option value="">-- Choose Country --</option>'
+            for c in countries:
+                opt = document.createElement("option")
+                opt.value = c
+                opt.textContent = c
+                c_select.appendChild(opt)
 
-        status.textContent = f"✅ Success! Total {len(api_messages)} Messages Loaded."
+        status.textContent = f"⚡ Live Auto-Updated! ({len(api_messages)} Messages Loaded)"
+        
+        # If a number is currently selected, refresh its OTP display automatically
+        selected_num = document.getElementById("numberSelect").value
+        if selected_num:
+            render_otp(selected_num)
 
     def on_country_change(event):
         selected_country = document.getElementById("countrySelect").value
@@ -266,7 +273,6 @@
         if not selected_country:
             return
 
-        # Dynamically map available numbers for selected country
         filtered_numbers = sorted(list(set([
             item["num"] for item in api_messages 
             if get_country(item["num"]) == selected_country and len(item["num"]) > 5
@@ -278,8 +284,7 @@
             opt.textContent = f"+{num}"
             n_select.appendChild(opt)
 
-    def fetch_otp(event):
-        selected_num = document.getElementById("numberSelect").value
+    def render_otp(selected_num):
         container = document.getElementById("otp-container")
         container.innerHTML = ""
 
@@ -309,13 +314,22 @@
         else:
             container.innerHTML = '<div class="card">کوئی پیغام موصول نہیں ہوا۔</div>'
 
-    # Set Handlers
-    document.getElementById("countrySelect").addEventListener("change", create_proxy(on_country_change))
-    document.getElementById("fetch-btn").addEventListener("click", create_proxy(fetch_otp))
+    def fetch_otp_click(event):
+        selected_num = document.getElementById("numberSelect").value
+        render_otp(selected_num)
 
-    # Run Loop
-    import asyncio
-    asyncio.ensure_future(fetch_all_data())
+    # Infinite Background Loop every 5 seconds
+    async def start_auto_refresh_loop():
+        while True:
+            await fetch_all_data()
+            await asyncio.sleep(5)  # Fetch again after 5 seconds
+
+    # Set Event Listeners
+    document.getElementById("countrySelect").addEventListener("change", create_proxy(on_country_change))
+    document.getElementById("fetch-btn").addEventListener("click", create_proxy(fetch_otp_click))
+
+    # Start loop on load
+    asyncio.ensure_future(start_auto_refresh_loop())
   </script>
 
 </body>
