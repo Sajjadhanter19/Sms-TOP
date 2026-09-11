@@ -3,13 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Live OTP Receiver - Dynamic API Integrated</title>
+  <title>Live OTP Receiver - Dynamic All APIs</title>
 
   <!-- PyScript Core CSS & JavaScript -->
   <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css" />
   <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
 
-  <!-- CSS Style Section -->
   <style>
     :root {
       --bg-color: #0f172a;
@@ -38,7 +37,7 @@
 
     .container {
       width: 100%;
-      max-width: 500px;
+      max-width: 550px;
     }
 
     .selector-box {
@@ -84,9 +83,10 @@
 
     #status-text {
       font-size: 0.85rem;
-      color: #94a3b8;
+      color: #38bdf8;
       margin-top: 10px;
       text-align: center;
+      font-weight: bold;
     }
 
     #otp-container {
@@ -132,12 +132,12 @@
 <body>
 
   <div class="container">
-    <h1>📱 Live OTP Receiver System</h1>
+    <h1>📱 Dynamic Live OTP Receiver</h1>
 
     <div class="selector-box">
       <label for="countrySelect">1. Select Country (مملکت منتخب کریں):</label>
       <select id="countrySelect">
-        <option value="">-- Loading API Data... --</option>
+        <option value="">-- Fetching API Data... --</option>
       </select>
 
       <label for="numberSelect">2. Select Number (نمبر منتخب کریں):</label>
@@ -146,26 +146,31 @@
       </select>
 
       <button id="fetch-btn">Fetch Live OTP (او ٹی پی حاصل کریں)</button>
-      <div id="status-text">Status: Fetching live API data...</div>
+      <div id="status-text">🔄 Fetching real-time APIs...</div>
     </div>
 
     <div id="otp-container"></div>
   </div>
 
-  <!-- PyScript Section: Python Logic Integrated Direct inside HTML -->
+  <!-- PyScript Section -->
   <script type="py">
     import re
+    import json
     from datetime import datetime
-    from js import document
+    from js import document, fetch, window
     from pyodide.ffi import create_proxy
-    from pyodide.http import pyfetch
 
-    # --- API CONFIGURATION ---
-    API1_URL   = "http://147.135.212.197/crapi/st/viewstats?token=SE5XREZBUzRfTpVnX2dQh3NQcYB2dZBWQ4JpXVxmblp2alCDi25oZg=="
-    API2_URL   = "http://147.135.212.197/crapi/st/viewstats?token=RVdWRElBUzRGcW9WeneNcmd2cGV9ZJd8e29PVlyPcFxeamxSgWVXfw=="
-    API3_URL   = "https://pscall.net/restapi/smsreport?key=SFNYSj1SS16DgYdyf4KIgA==&start=0&length=30"
+    # --- ALL 4 APIs CONFIGURATION ---
+    PROX = "https://api.allorigins.win/raw?url="
+    
+    API_LIST = [
+        PROX + "http://147.135.212.197/crapi/st/viewstats?token=SE5XREZBUzRfTpVnX2dQh3NQcYB2dZBWQ4JpXVxmblp2alCDi25oZg==",
+        PROX + "http://147.135.212.197/crapi/st/viewstats?token=RVdWRElBUzRGcW9WeneNcmd2cGV9ZJd8e29PVlyPcFxeamxSgWVXfw==",
+        PROX + "http://147.135.212.197/crapi/had/viewstats?token=SVVSRzRSQmhXkYuBilFrR2iVZoldZ1dfX4N4WGeHhHdmdFhphYZw==", # NEW API ADDED
+        "https://pscall.net/restapi/smsreport?key=SFNYSj1SS16DgYdyf4KIgA==&start=0&length=50"
+    ]
 
-    # --- Python Country Database ---
+    # --- Dynamic Country Code Database ---
     country_db = {
         "1":"🇺🇸 USA/Canada","93":"🇦🇫 Afghanistan","355":"🇦🇱 Albania","213":"🇩🇿 Algeria",
         "54":"🇦🇷 Argentina","61":"🇦🇺 Australia","43":"🇦🇹 Austria","994":"🇦🇿 Azerbaijan",
@@ -181,11 +186,10 @@
         "90":"🇹🇷 Turkey","971":"🇦🇪 UAE","44":"🇬🇧 UK","84":"🇻🇳 Vietnam","967":"🇾🇪 Yemen"
     }
 
-    # Global storage for fetched API messages
     api_messages = []
 
     def get_country(number):
-        clean = str(number).replace("+", "").replace(" ", "")
+        clean = str(number).replace("+", "").replace(" ", "").replace("-", "")
         for l in range(4, 0, -1):
             prefix = clean[:l]
             if prefix in country_db:
@@ -196,73 +200,54 @@
         match = re.search(r'\b\d{3}[-\s]\d{3}\b|\b\d{4,8}\b', str(msg))
         return match.group(0) if match else "N/A"
 
-    # Async function to fetch data directly from APIs
-    async def fetch_api_data():
+    async def fetch_single_api(url):
+        try:
+            response = await fetch(url)
+            text = await response.text()
+            data = json.loads(text)
+
+            # Standard format checking
+            if isinstance(data, list):
+                for row in data:
+                    if len(row) >= 3:
+                        api_messages.append({
+                            "service": row[0] or "Unknown",
+                            "num": str(row[1] or ""),
+                            "msg": row[2] or "",
+                            "date": row[3] if len(row) > 3 else ""
+                        })
+            elif isinstance(data, dict) and data.get("result") == "success":
+                for item in data.get("data", []):
+                    api_messages.append({
+                        "service": item.get("cli", "Unknown"),
+                        "num": str(item.get("num", "")),
+                        "msg": item.get("sms", ""),
+                        "date": item.get("dateadded", "")
+                    })
+        except Exception as e:
+            print("Fetch Error:", e)
+
+    async def fetch_all_data():
         global api_messages
         api_messages = []
         status = document.getElementById("status-text")
-        status.textContent = "Status: Fetching data from APIs..."
+        status.textContent = "🔄 Loading Data from 4 APIs..."
 
-        # API 1
-        try:
-            res1 = await pyfetch(API1_URL)
-            if res1.ok:
-                data1 = await res1.json()
-                if isinstance(data1, list):
-                    for row in data1:
-                        api_messages.append({
-                            "service": row[0] or "Unknown",
-                            "num": str(row[1] or ""),
-                            "msg": row[2] or "",
-                            "date": row[3] or ""
-                        })
-        except Exception as e:
-            print("API 1 Error:", e)
-
-        # API 2
-        try:
-            res2 = await pyfetch(API2_URL)
-            if res2.ok:
-                data2 = await res2.json()
-                if isinstance(data2, list):
-                    for row in data2:
-                        api_messages.append({
-                            "service": row[0] or "Unknown",
-                            "num": str(row[1] or ""),
-                            "msg": row[2] or "",
-                            "date": row[3] or ""
-                        })
-        except Exception as e:
-            print("API 2 Error:", e)
-
-        # API 3
-        try:
-            res3 = await pyfetch(API3_URL)
-            if res3.ok:
-                data3 = await res3.json()
-                if data3.get("result") == "success" and isinstance(data3.get("data"), list):
-                    for item in data3.get("data"):
-                        api_messages.append({
-                            "service": item.get("cli", "Unknown"),
-                            "num": str(item.get("num", "")),
-                            "msg": item.get("sms", ""),
-                            "date": item.get("dateadded", "")
-                        })
-        except Exception as e:
-            print("API 3 Error:", e)
+        for url in API_LIST:
+            await fetch_single_api(url)
 
         populate_countries()
 
-    # Populate Country Dropdown based on API numbers
     def populate_countries():
         c_select = document.getElementById("countrySelect")
         status = document.getElementById("status-text")
         c_select.innerHTML = '<option value="">-- Choose Country --</option>'
 
         if not api_messages:
-            status.textContent = "Status: No numbers fetched or CORS error."
+            status.textContent = "❌ No numbers returned from APIs!"
             return
 
+        # Extract unique dynamic countries from fetched numbers
         countries = sorted(list(set([get_country(item["num"]) for item in api_messages if len(item["num"]) > 5])))
         
         for c in countries:
@@ -271,7 +256,7 @@
             opt.textContent = c
             c_select.appendChild(opt)
 
-        status.textContent = f"Status: Loaded {len(api_messages)} messages successfully!"
+        status.textContent = f"✅ Success! Total {len(api_messages)} Messages Loaded."
 
     def on_country_change(event):
         selected_country = document.getElementById("countrySelect").value
@@ -281,7 +266,7 @@
         if not selected_country:
             return
 
-        # Filter numbers matching selected country
+        # Dynamically map available numbers for selected country
         filtered_numbers = sorted(list(set([
             item["num"] for item in api_messages 
             if get_country(item["num"]) == selected_country and len(item["num"]) > 5
@@ -302,7 +287,6 @@
             container.innerHTML = '<div class="card">براہ کرم نمبر منتخب کریں۔</div>'
             return
 
-        # Show all OTP messages for selected number
         matched_messages = [item for item in api_messages if str(item["num"]) == str(selected_num)]
 
         if matched_messages:
@@ -325,13 +309,13 @@
         else:
             container.innerHTML = '<div class="card">کوئی پیغام موصول نہیں ہوا۔</div>'
 
-    # Setup Event Listeners and Init Data
+    # Set Handlers
     document.getElementById("countrySelect").addEventListener("change", create_proxy(on_country_change))
     document.getElementById("fetch-btn").addEventListener("click", create_proxy(fetch_otp))
 
-    # Trigger async API fetch on load
+    # Run Loop
     import asyncio
-    asyncio.ensure_future(fetch_api_data())
+    asyncio.ensure_future(fetch_all_data())
   </script>
 
 </body>
