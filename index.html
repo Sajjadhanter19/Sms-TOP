@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Live OTP Receiver - Dynamic All APIs</title>
+  <title>Live OTP Receiver - Dynamic Server Request</title>
 
   <!-- PyScript Core CSS & JavaScript -->
   <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css" />
@@ -137,7 +137,13 @@
     <div class="selector-box">
       <label for="countrySelect">1. Select Country (مملکت منتخب کریں):</label>
       <select id="countrySelect">
-        <option value="">-- Fetching API Data... --</option>
+        <option value="">-- Choose Country --</option>
+        <option value="92">🇵🇰 Pakistan (+92)</option>
+        <option value="1">🇺🇸 USA (+1)</option>
+        <option value="91">🇮🇳 India (+91)</option>
+        <option value="44">🇬🇧 UK (+44)</option>
+        <option value="971">🇦🇪 UAE (+971)</option>
+        <option value="966">🇸🇦 Saudi Arabia (+966)</option>
       </select>
 
       <label for="numberSelect">2. Select Number (نمبر منتخب کریں):</label>
@@ -146,7 +152,7 @@
       </select>
 
       <button id="fetch-btn">Fetch Live OTP (او ٹی پی حاصل کریں)</button>
-      <div id="status-text">🔄 Loading API Data...</div>
+      <div id="status-text">Ready</div>
     </div>
 
     <div id="otp-container"></div>
@@ -161,158 +167,113 @@
     from js import document, fetch
     from pyodide.ffi import create_proxy
 
-    # --- ALL 4 APIs CONFIGURATION ---
+    BASE_URL = "http://147.135.212.197/crapi/st/viewstats"
+    TOKEN = "SE5XREZBUzRfTpVnX2dQh3NQcYB2dZBWQ4JpXVxmblp2alCDi25oZg=="
     PROX = "https://api.allorigins.win/raw?url="
-    
-    API_LIST = [
-        PROX + "http://147.135.212.197/crapi/st/viewstats?token=SE5XREZBUzRfTpVnX2dQh3NQcYB2dZBWQ4JpXVxmblp2alCDi25oZg==",
-        PROX + "http://147.135.212.197/crapi/st/viewstats?token=RVdWRElBUzRGcW9WeneNcmd2cGV9ZJd8e29PVlyPcFxeamxSgWVXfw==",
-        PROX + "http://147.135.212.197/crapi/had/viewstats?token=SVVSRzRSQmhXkYuBilFrR2iVZoldZ1dfX4N4WGeHhHdmdFhphYZw==",
-        "https://pscall.net/restapi/smsreport?key=SFNYSj1SS16DgYdyf4KIgA==&start=0&length=50"
-    ]
-
-    # Dynamic Country Code Database
-    country_db = {
-        "1":"🇺🇸 USA/Canada","93":"🇦🇫 Afghanistan","355":"🇦🇱 Albania","213":"🇩🇿 Algeria",
-        "54":"🇦🇷 Argentina","61":"🇦🇺 Australia","43":"🇦🇹 Austria","994":"🇦🇿 Azerbaijan",
-        "880":"🇧🇩 Bangladesh","32":"🇧🇪 Belgium","55":"🇧🇷 Brazil","86":"🇨🇳 China",
-        "20":"🇪🇬 Egypt","33":"🇫🇷 France","49":"🇩🇪 Germany","91":"🇮🇳 India",
-        "62":"🇮🇩 Indonesia","98":"🇮🇷 Iran","964":"🇮🇶 Iraq","39":"🇮🇹 Italy",
-        "81":"🇯🇵 Japan","962":"🇯🇴 Jordan","254":"🇰🇪 Kenya","965":"🇰🇼 Kuwait",
-        "60":"🇲🇾 Malaysia","52":"🇲🇽 Mexico","31":"🇳🇱 Netherlands","92":"🇵🇰 Pakistan",
-        "970":"🇵🇸 Palestine","63":"🇵🇭 Philippines","48":"🇵🇱 Poland","351":"🇵🇹 Portugal",
-        "974":"🇶🇦 Qatar","7":"🇷🇺 Russia","966":"🇸🇦 Saudi Arabia","65":"🇸🇬 Singapore",
-        "27":"🇿🇦 South Africa","82":"🇰🇷 South Korea","34":"🇪🇸 Spain","94":"🇱🇰 Sri Lanka",
-        "46":"🇸🇪 Sweden","41":"🇨🇭 Switzerland","886":"🇹🇼 Taiwan","66":"🇹🇭 Thailand",
-        "90":"🇹🇷 Turkey","971":"🇦🇪 UAE","44":"🇬🇧 UK","84":"🇻🇳 Vietnam","967":"🇾🇪 Yemen"
-    }
-
-    api_messages = []
-
-    def get_country(number):
-        clean = str(number).replace("+", "").replace(" ", "").replace("-", "")
-        for l in range(4, 0, -1):
-            prefix = clean[:l]
-            if prefix in country_db:
-                return country_db[prefix]
-        return "🌍 Other Countries"
 
     def extract_code(msg):
         match = re.search(r'\b\d{3}[-\s]\d{3}\b|\b\d{4,8}\b', str(msg))
         return match.group(0) if match else "N/A"
 
-    async def fetch_single_api(url):
+    async def on_country_change(event):
+        country_code = document.getElementById("countrySelect").value
+        n_select = document.getElementById("numberSelect")
+        status = document.getElementById("status-text")
+
+        n_select.innerHTML = '<option value="">-- Loading Numbers from Server... --</option>'
+        if not country_code:
+            n_select.innerHTML = '<option value="">-- Select Country First --</option>'
+            return
+
+        status.textContent = f"🔄 Requesting server for Country (+{country_code}) numbers..."
+
+        # 1. Sending Direct Request to Server with Country Parameter
+        target_url = f"{PROX}{BASE_URL}?token={TOKEN}&country={country_code}"
+        
         try:
-            response = await fetch(url)
+            response = await fetch(target_url)
             text = await response.text()
             data = json.loads(text)
 
+            n_select.innerHTML = '<option value="">-- Choose Number --</option>'
+            numbers_found = set()
+
             if isinstance(data, list):
                 for row in data:
-                    if len(row) >= 3:
-                        api_messages.append({
-                            "service": row[0] or "Unknown",
-                            "num": str(row[1] or ""),
-                            "msg": row[2] or "",
-                            "date": row[3] if len(row) > 3 else ""
-                        })
-            elif isinstance(data, dict) and data.get("result") == "success":
-                for item in data.get("data", []):
-                    api_messages.append({
-                        "service": item.get("cli", "Unknown"),
-                        "num": str(item.get("num", "")),
-                        "msg": item.get("sms", ""),
-                        "date": item.get("dateadded", "")
-                    })
+                    if len(row) >= 2 and str(row[1]).startswith(country_code):
+                        numbers_found.add(str(row[1]))
+
+            for num in sorted(list(numbers_found)):
+                opt = document.createElement("option")
+                opt.value = num
+                opt.textContent = f"+{num}"
+                n_select.appendChild(opt)
+
+            if numbers_found:
+                status.textContent = f"✅ Loaded {len(numbers_found)} active numbers for +{country_code}"
+            else:
+                status.textContent = f"⚠️ No numbers returned from server for +{country_code}"
+
         except Exception as e:
-            pass
+            status.textContent = "❌ Error fetching numbers from server!"
 
-    async def fetch_all_data():
-        global api_messages
-        api_messages = []
-        status = document.getElementById("status-text")
-        status.textContent = "🔄 Loading Data from 4 APIs..."
-
-        for url in API_LIST:
-            await fetch_single_api(url)
-
-        populate_countries()
-
-    def populate_countries():
-        c_select = document.getElementById("countrySelect")
-        status = document.getElementById("status-text")
-        c_select.innerHTML = '<option value="">-- Choose Country --</option>'
-
-        if not api_messages:
-            status.textContent = "❌ No numbers returned from APIs!"
-            return
-
-        countries = sorted(list(set([get_country(item["num"]) for item in api_messages if len(item["num"]) > 5])))
-        
-        for c in countries:
-            opt = document.createElement("option")
-            opt.value = c
-            opt.textContent = c
-            c_select.appendChild(opt)
-
-        status.textContent = f"✅ Success! Total {len(api_messages)} Messages Loaded."
-
-    def on_country_change(event):
-        selected_country = document.getElementById("countrySelect").value
-        n_select = document.getElementById("numberSelect")
-        n_select.innerHTML = '<option value="">-- Choose Number --</option>'
-
-        if not selected_country:
-            return
-
-        filtered_numbers = sorted(list(set([
-            item["num"] for item in api_messages 
-            if get_country(item["num"]) == selected_country and len(item["num"]) > 5
-        ])))
-
-        for num in filtered_numbers:
-            opt = document.createElement("option")
-            opt.value = num
-            opt.textContent = f"+{num}"
-            n_select.appendChild(opt)
-
-    def fetch_otp(event):
+    async def fetch_otp(event):
         selected_num = document.getElementById("numberSelect").value
         container = document.getElementById("otp-container")
+        status = document.getElementById("status-text")
         container.innerHTML = ""
 
         if not selected_num:
             container.innerHTML = '<div class="card">براہ کرم نمبر منتخب کریں۔</div>'
             return
 
-        matched_messages = [item for item in api_messages if str(item["num"]) == str(selected_num)]
+        status.textContent = f"🔄 Fetching OTP for +{selected_num}..."
 
-        if matched_messages:
-            for item in matched_messages:
-                code = extract_code(item["msg"])
-                country = get_country(item["num"])
-                date_str = item["date"] or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        # 2. Sending Request to Server for Selected Number
+        target_url = f"{PROX}{BASE_URL}?token={TOKEN}&number={selected_num}"
 
-                card_html = f'''
-                    <div class="card">
-                        <div class="field"><b>🌍 Country:</b> {country}</div>
-                        <div class="field"><b>📱 Number:</b> <code>+{item["num"]}</code></div>
-                        <div class="field"><b>🛠 Service:</b> <code>{item["service"]}</code></div>
-                        <div class="field"><b>🔑 OTP Code:</b> <code>{code}</code></div>
-                        <div class="field"><b>⌚ Time:</b> {date_str}</div>
-                        <div class="message-box">{item["msg"]}</div>
-                    </div>
-                '''
-                container.innerHTML += card_html
-        else:
-            container.innerHTML = '<div class="card">کوئی پیغام موصول نہیں ہوا۔</div>'
+        try:
+            response = await fetch(target_url)
+            text = await response.text()
+            data = json.loads(text)
 
-    # Set Event Listeners
+            matched_messages = []
+            if isinstance(data, list):
+                for row in data:
+                    if len(row) >= 3 and str(row[1]) == selected_num:
+                        matched_messages.append({
+                            "service": row[0] or "Unknown",
+                            "num": str(row[1]),
+                            "msg": row[2] or "",
+                            "date": row[3] if len(row) > 3 else ""
+                        })
+
+            if matched_messages:
+                status.textContent = f"✅ OTP Received ({len(matched_messages)} Messages)"
+                for item in matched_messages:
+                    code = extract_code(item["msg"])
+                    date_str = item["date"] or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+                    card_html = f'''
+                        <div class="card">
+                            <div class="field"><b>📱 Number:</b> <code>+{item["num"]}</code></div>
+                            <div class="field"><b>🛠 Service:</b> <code>{item["service"]}</code></div>
+                            <div class="field"><b>🔑 OTP Code:</b> <code>{code}</code></div>
+                            <div class="field"><b>⌚ Time:</b> {date_str}</div>
+                            <div class="message-box">{item["msg"]}</div>
+                        </div>
+                    '''
+                    container.innerHTML += card_html
+            else:
+                status.textContent = "⚠️ No OTP messages found for this number."
+                container.innerHTML = '<div class="card">کوئی پیغام موصول نہیں ہوا۔</div>'
+
+        except Exception as e:
+            status.textContent = "❌ Error fetching OTP from server!"
+
+    # Event Listeners
     document.getElementById("countrySelect").addEventListener("change", create_proxy(on_country_change))
     document.getElementById("fetch-btn").addEventListener("click", create_proxy(fetch_otp))
-
-    # Fetch data once on load
-    asyncio.ensure_future(fetch_all_data())
   </script>
 
 </body>
