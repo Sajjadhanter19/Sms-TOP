@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>OTP Live Receiver</title>
+  <title>Dynamic OTP Selector</title>
   <style>
     :root {
       --bg-color: #0f172a;
@@ -24,33 +24,38 @@
       align-items: center;
     }
 
-    h1 {
-      color: var(--accent-color);
-      margin-bottom: 20px;
-    }
-
-    .controls {
-      margin-bottom: 20px;
-    }
-
-    button {
-      background-color: #0284c7;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      font-size: 1rem;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-
-    button:hover {
-      background-color: #0369a1;
-    }
-
-    #messages-container {
+    .selector-box {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      padding: 20px;
+      border-radius: 10px;
       width: 100%;
-      max-width: 500px;
+      max-width: 480px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+      color: var(--accent-color);
+    }
+
+    select {
+      width: 100%;
+      padding: 10px;
+      border-radius: 6px;
+      background-color: #0f172a;
+      color: #fff;
+      border: 1px solid var(--border-color);
+      font-size: 1rem;
+      outline: none;
+    }
+
+    #otp-container {
+      width: 100%;
+      max-width: 480px;
       display: flex;
       flex-direction: column;
       gap: 15px;
@@ -64,14 +69,6 @@
       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
     }
 
-    .card-header {
-      border-bottom: 1px solid var(--border-color);
-      padding-bottom: 8px;
-      margin-bottom: 12px;
-      font-weight: bold;
-      text-align: center;
-    }
-
     .field {
       margin: 6px 0;
       font-size: 0.95rem;
@@ -83,6 +80,7 @@
       border-radius: 4px;
       color: var(--accent-color);
       font-family: monospace;
+      font-size: 1.1rem;
     }
 
     .message-box {
@@ -96,176 +94,110 @@
       border-left: 3px solid var(--accent-color);
     }
 
-    .buttons-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-top: 15px;
-    }
-
-    .btn-link {
-      display: block;
-      text-align: center;
-      background-color: #334155;
-      color: #f8fafc;
-      text-decoration: none;
-      padding: 8px;
-      border-radius: 5px;
+    .status {
       font-size: 0.85rem;
-      transition: background 0.2s;
-    }
-
-    .btn-link:hover {
-      background-color: #475569;
+      color: #94a3b8;
+      margin-top: 8px;
     }
   </style>
 </head>
 <body>
 
-  <h1>💐 『 ɴᴇᴡ ᴏᴛᴘ ʀᴇᴄᴇɪᴠᴇᴅ 』 ✨</h1>
+  <h1>📱 Select Number & Receive OTP</h1>
 
-  <div class="controls">
-    <button onclick="simulateNewSms()">Simulate Received SMS</button>
+  <div class="selector-box">
+    <label for="numberSelect">Choose Active Number:</label>
+    <select id="numberSelect" onchange="onNumberChange()">
+      <option value="">-- Fetching Available Numbers... --</option>
+    </select>
+    <div class="status" id="statusText">Status: Idle</div>
   </div>
 
-  <div id="messages-container"></div>
+  <div id="otp-container"></div>
 
   <script>
-    // --- COUNTRY DATABASE ---
-    const countryDb = {
-      "1":"🇺🇸 USA/Canada","93":"🇦🇫 Afghanistan","355":"🇦🇱 Albania","213":"🇩🇿 Algeria",
-      "376":"🇦🇩 Andorra","244":"🇦🇴 Angola","1264":"🇦🇮 Anguilla","1268":"🇦🇬 Antigua",
-      "54":"🇦🇷 Argentina","374":"🇦🇲 Armenia","61":"🇦🇺 Australia","43":"🇦🇹 Austria",
-      "994":"🇦🇿 Azerbaijan","1242":"🇧🇸 Bahamas","973":"🇧🇭 Bahrain","880":"🇧🇩 Bangladesh",
-      "1246":"🇧🇧 Barbados","375":"🇧🇾 Belarus","32":"🇧🇪 Belgium","501":"🇧🇿 Belize",
-      "229":"🇧🇯 Benin","1441":"🇧🇲 Bermuda","975":"🇧🇹 Bhutan","591":"🇧🇴 Bolivia",
-      "387":"🇧🇦 Bosnia","267":"🇧🇼 Botswana","55":"🇧🇷 Brazil","673":"🇧🇳 Brunei",
-      "359":"🇧🇬 Bulgaria","226":"🇧🇫 Burkina Faso","257":"🇧🇮 Burundi","855":"🇰🇭 Cambodia",
-      "237":"🇨🇲 Cameroon","238":"🇨🇻 Cape Verde","1345":"🇰🇾 Cayman Islands",
-      "236":"🇨🇫 Central African Republic","235":"🇹🇩 Chad","56":"🇨🇱 Chile","86":"🇨🇳 China",
-      "57":"🇨🇴 Colombia","269":"🇰🇲 Comoros","242":"🇨🇬 Republic of Congo",
-      "243":"🇨🇩 DR Congo","506":"🇨🇷 Costa Rica","385":"🇭🇷 Croatia","53":"🇨🇺 Cuba",
-      "357":"🇨🇾 Cyprus","420":"🇨🇿 Czech Republic","45":"🇩🇰 Denmark","253":"🇩🇯 Djibouti",
-      "1767":"🇩🇲 Dominica","1809":"🇩🇴 Dominican Republic","593":"🇪🇨 Ecuador",
-      "20":"🇪🇬 Egypt","503":"🇸🇻 El Salvador","240":"🇬🇶 Equatorial Guinea",
-      "291":"🇪🇷 Eritrea","372":"🇪🇪 Estonia","251":"🇪🇹 Ethiopia","679":"🇫🇯 Fiji",
-      "358":"🇫🇮 Finland","33":"🇫🇷 France","689":"🇵🇫 French Polynesia","241":"🇬🇦 Gabon",
-      "220":"🇬🇲 Gambia","995":"🇬🇪 Georgia","49":"🇩🇪 Germany","233":"🇬🇭 Ghana",
-      "350":"🇬🇮 Gibraltar","30":"🇬🇷 Greece","1473":"🇬🇩 Grenada","502":"🇬🇹 Guatemala",
-      "224":"🇬🇳 Guinea","245":"🇬🇼 Guinea-Bissau","592":"🇬🇾 Guyana","509":"🇭🇹 Haiti",
-      "504":"🇭🇳 Honduras","852":"🇭🇰 Hong Kong","36":"🇭🇺 Hungary","354":"🇮🇸 Iceland",
-      "91":"🇮🇳 India","62":"🇮🇩 Indonesia","98":"🇮🇷 Iran","964":"🇮🇶 Iraq",
-      "353":"🇮🇪 Ireland","972":"🇮🇱 Israel","39":"🇮🇹 Italy","1876":"🇯🇲 Jamaica",
-      "81":"🇯🇵 Japan","962":"🇯🇴 Jordan","254":"🇰🇪 Kenya","686":"🇰🇮 Kiribati",
-      "965":"🇰🇼 Kuwait","996":"🇰🇬 Kyrgyzstan","856":"🇱🇦 Laos","371":"🇱🇻 Latvia",
-      "961":"🇱🇧 Lebanon","266":"🇱🇸 Lesotho","231":"🇱🇷 Liberia","218":"🇱🇾 Libya",
-      "370":"🇱🇹 Lithuania","352":"🇱🇺 Luxembourg","853":"🇲🇴 Macau","389":"🇲🇰 Macedonia",
-      "261":"🇲🇬 Madagascar","265":"🇲🇼 Malawi","60":"🇲🇾 Malaysia","960":"🇲🇻 Maldives",
-      "223":"🇲🇱 Mali","356":"🇲🇹 Malta","692":"🇲🇭 Marshall Islands","222":"🇲🇷 Mauritania",
-      "230":"🇲🇺 Mauritius","52":"🇲🇽 Mexico","691":"🇫🇲 Micronesia","373":"🇲🇩 Moldova",
-      "377":"🇲🇨 Monaco","976":"🇲🇳 Mongolia","382":"🇲🇪 Montenegro","1664":"🇲🇸 Montserrat",
-      "212":"🇲🇦 Morocco","258":"🇲🇿 Mozambique","95":"🇲🇲 Myanmar","264":"🇳🇦 Namibia",
-      "674":"🇳🇷 Nauru","977":"🇳🇵 Nepal","31":"🇳🇱 Netherlands","64":"🇳🇿 New Zealand",
-      "505":"🇳🇮 Nicaragua","227":"🇳🇪 Niger","234":"🇳🇬 Nigeria","850":"🇰🇵 North Korea",
-      "47":"🇳🇴 Norway","968":"🇴🇲 Oman","92":"🇵🇰 Pakistan","680":"🇵🇼 Palau",
-      "970":"🇵🇸 Palestine","507":"🇵🇦 Panama","675":"🇵🇬 Papua New Guinea",
-      "595":"🇵🇾 Paraguay","51":"🇵🇪 Peru","63":"🇵🇭 Philippines","48":"🇵🇱 Poland",
-      "351":"🇵🇹 Portugal","1787":"🇵🇷 Puerto Rico","974":"🇶🇦 Qatar","40":"🇷🇴 Romania",
-      "7":"🇷🇺 Russia/Kazakhstan","250":"🇷🇼 Rwanda","685":"🇼🇸 Samoa",
-      "239":"🇸🇹 Sao Tome","966":"🇸🇦 Saudi Arabia","221":"🇸🇳 Senegal","381":"🇷🇸 Serbia",
-      "248":"🇸🇨 Seychelles","232":"🇸🇱 Sierra Leone","65":"🇸🇬 Singapore",
-      "421":"🇸🇰 Slovakia","386":"🇸🇮 Slovenia","677":"🇸🇧 Solomon Islands",
-      "252":"🇸🇴 Somalia","27":"🇿🇦 South Africa","82":"🇰🇷 South Korea",
-      "211":"🇸🇸 South Sudan","34":"🇪🇸 Spain","94":"🇱🇰 Sri Lanka","249":"🇸🇩 Sudan",
-      "597":"🇸🇷 Suriname","268":"🇸🇿 Swaziland","46":"🇸🇪 Sweden","41":"🇨🇭 Switzerland",
-      "963":"🇸🇾 Syria","886":"🇹🇼 Taiwan","992":"🇹🇯 Tajikistan","255":"🇹ℤ Tanzania",
-      "66":"🇹🇭 Thailand","670":"🇹🇱 Timor-Leste","228":"🇹🇬 Togo","676":"🇹🇴 Tonga",
-      "1868":"🇹🇹 Trinidad & Tobago","216":"🇹🇳 Tunisia","90":"🇹🇷 Turkey",
-      "993":"🇹🇲 Turkmenistan","1649":"🇹🇨 Turks & Caicos","688":"🇹🇻 Tuvalu",
-      "256":"🇺🇬 Uganda","380":"🇺🇦 Ukraine","971":"🇦🇪 UAE","44":"🇬🇧 UK",
-      "598":"🇺🇾 Uruguay","998":"🇺🇿 Uzbekistan","678":"🇻🇺 Vanuatu",
-      "58":"🇻🇪 Venezuela","84":"🇻🇳 Vietnam","1284":"🇻🇬 British Virgin Islands",
-      "1340":"🇻🇮 US Virgin Islands","967":"🇾🇪 Yemen","260":"🇿🇲 Zambia",
-      "263":"🇿🇼 Zimbabwe"
-    };
+    const SERVER_URL = "http://localhost:3000";
+    let pollInterval = null;
 
-    const seenIds = new Set();
+    // 1. Load active numbers list on page load
+    async function loadNumbers() {
+      try {
+        const response = await fetch(`${SERVER_URL}/api/numbers`);
+        const data = await response.json();
 
-    function getCountry(number) {
-      const cleanNum = String(number).replace("+", "").replace(/\s+/g, "");
-      for (let len = 4; len >= 1; len--) {
-        const prefix = cleanNum.substring(0, len);
-        if (countryDb[prefix]) {
-          return countryDb[prefix];
+        const select = document.getElementById("numberSelect");
+        select.innerHTML = '<option value="">-- Select a Number --</option>';
+
+        if (data.success && data.numbers.length > 0) {
+          data.numbers.forEach(num => {
+            const opt = document.createElement("option");
+            opt.value = num;
+            opt.textContent = `+${num}`;
+            select.appendChild(opt);
+          });
+        } else {
+          select.innerHTML = '<option value="">No numbers available</option>';
         }
+      } catch (err) {
+        document.getElementById("statusText").textContent = "Status: Server offline or error!";
       }
-      return "🌍 Unknown";
     }
 
+    // 2. Extract OTP code using Regex
     function extractCode(msg) {
       const match = String(msg).match(/\b\d{3}[-\s]\d{3}\b|\b\d{4,8}\b/);
       return match ? match[0] : "N/A";
     }
 
-    function maskNumber(number) {
-      const clean = String(number).replace("+", "");
-      if (clean.length > 7) {
-        return clean.substring(0, 6) + "****" + clean.substring(clean.length - 3);
+    // 3. Fetch OTP for the selected number
+    async function fetchOtpForNumber(number) {
+      try {
+        document.getElementById("statusText").textContent = `Status: Checking live OTP for +${number}...`;
+        const response = await fetch(`${SERVER_URL}/api/get-otp?number=${encodeURIComponent(number)}`);
+        const data = await response.json();
+
+        const container = document.getElementById("otp-container");
+        container.innerHTML = "";
+
+        if (data.success && data.messages.length > 0) {
+          data.messages.forEach(item => {
+            const code = extractCode(item.message);
+            const card = document.createElement("div");
+            card.className = "card";
+
+            card.innerHTML = `
+              <div class="field"><b>📱 Number:</b> <code>+${item.number}</code></div>
+              <div class="field"><b>🛠 Service:</b> <code>${item.service}</code></div>
+              <div class="field"><b>🔑 OTP Code:</b> <code>${code}</code></div>
+              <div class="field"><b>⌚ Time:</b> ${item.date}</div>
+              <div class="message-box">${item.message}</div>
+            `;
+            container.appendChild(card);
+          });
+        } else {
+          container.innerHTML = '<div class="card">No OTP received yet for this number. Waiting...</div>';
+        }
+      } catch (err) {
+        console.error("Fetch OTP Error:", err);
       }
-      return clean;
     }
 
-    function renderSms(service, number, message, date) {
-      const uid = `${date}|${number}|${message.substring(0, 30)}`;
-      if (seenIds.has(uid)) return;
-      seenIds.add(uid);
+    // 4. Handle selection change & start polling every 3 seconds
+    function onNumberChange() {
+      const selectedNum = document.getElementById("numberSelect").value;
+      if (pollInterval) clearInterval(pollInterval);
 
-      const country = getCountry(number);
-      const code = extractCode(message);
-      const masked = maskNumber(number);
-
-      const container = document.getElementById("messages-container");
-      
-      const card = document.createElement("div");
-      card.className = "card";
-
-      card.innerHTML = `
-        <div class="card-header">💐 『 ɴᴇᴡ ᴏᴛᴘ ʀᴇᴄᴇɪᴠᴇᴅ 』 ✨</div>
-        <div class="field"><b>⌚ ᴛɪᴍᴇ:</b> <code>${date}</code></div>
-        <div class="field"><b>🌍 ᴄᴏᴜɴᴛʀʏ:</b> ${country}</div>
-        <div class="field"><b>📱 ɴᴜ姆ʙᴇʀ:</b> <code>${masked}</code></div>
-        <div class="field"><b>🛠 ꜱᴇʀᴠɪᴄᴇ:</b> <code>${service}</code></div>
-        <div class="field"><b>🔑 ᴄᴏᴅᴇ:</b> <code>${code}</code></div>
-        <div class="field" style="margin-top: 10px;"><b>💬 ᴍᴇssᴀɢᴇ:</b></div>
-        <div class="message-box">${message}</div>
-        <div class="buttons-grid">
-          <a class="btn-link" href="#" target="_blank">📱 Channel</a>
-          <a class="btn-link" href="#" target="_blank">☎️ Number</a>
-          <a class="btn-link" href="#" target="_blank">📥 NO. CHNL</a>
-          <a class="btn-link" href="#" target="_blank">🎀 MAIN CHNL</a>
-        </div>
-      `;
-
-      container.prepend(card);
+      if (selectedNum) {
+        fetchOtpForNumber(selectedNum);
+        pollInterval = setInterval(() => fetchOtpForNumber(selectedNum), 3000);
+      } else {
+        document.getElementById("otp-container").innerHTML = "";
+        document.getElementById("statusText").textContent = "Status: Idle";
+      }
     }
 
-    // Demo Data Generator
-    function simulateNewSms() {
-      const services = ["Google", "WhatsApp", "Telegram", "Facebook", "Amazon"];
-      const randomService = services[Math.floor(Math.random() * services.length)];
-      const randomCode = Math.floor(100000 + Math.random() * 900000);
-      const randomNum = "92" + Math.floor(3000000000 + Math.random() * 9000000);
-      const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
-
-      renderSms(
-        randomService,
-        randomNum,
-        `Your ${randomService} verification code is: ${randomCode}`,
-        now
-      );
-    }
-
-    // Note: Direct CORS policies avoid browser fetch to HTTP APIs from HTTPS/Local origins directly.
+    // Init
+    window.onload = loadNumbers;
   </script>
 </body>
 </html>
