@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Live OTP Receiver </title>
+  <title>Live OTP Receiver - Dynamic All APIs</title>
 
   <!-- PyScript Core CSS & JavaScript -->
   <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css" />
@@ -146,7 +146,7 @@
       </select>
 
       <button id="fetch-btn">Fetch Live OTP (او ٹی پی حاصل کریں)</button>
-      <div id="status-text">🔄 Initializing 1-minute auto sync...</div>
+      <div id="status-text">🔄 Loading API Data...</div>
     </div>
 
     <div id="otp-container"></div>
@@ -230,37 +230,32 @@
     async def fetch_all_data():
         global api_messages
         api_messages = []
+        status = document.getElementById("status-text")
+        status.textContent = "🔄 Loading Data from 4 APIs..."
 
         for url in API_LIST:
             await fetch_single_api(url)
 
-        update_ui()
+        populate_countries()
 
-    def update_ui():
+    def populate_countries():
         c_select = document.getElementById("countrySelect")
         status = document.getElementById("status-text")
-        
-        current_country = c_select.value
+        c_select.innerHTML = '<option value="">-- Choose Country --</option>'
 
         if not api_messages:
-            status.textContent = "❌ No data from APIs. Retrying in 1 min..."
+            status.textContent = "❌ No numbers returned from APIs!"
             return
 
         countries = sorted(list(set([get_country(item["num"]) for item in api_messages if len(item["num"]) > 5])))
         
-        if len(c_select.options) <= 1 or not current_country:
-            c_select.innerHTML = '<option value="">-- Choose Country --</option>'
-            for c in countries:
-                opt = document.createElement("option")
-                opt.value = c
-                opt.textContent = c
-                c_select.appendChild(opt)
+        for c in countries:
+            opt = document.createElement("option")
+            opt.value = c
+            opt.textContent = c
+            c_select.appendChild(opt)
 
-        status.textContent = f"⚡ Updated! ({len(api_messages)} Messages Loaded - Next sync in 1 min)"
-        
-        selected_num = document.getElementById("numberSelect").value
-        if selected_num:
-            render_otp(selected_num)
+        status.textContent = f"✅ Success! Total {len(api_messages)} Messages Loaded."
 
     def on_country_change(event):
         selected_country = document.getElementById("countrySelect").value
@@ -281,7 +276,8 @@
             opt.textContent = f"+{num}"
             n_select.appendChild(opt)
 
-    def render_otp(selected_num):
+    def fetch_otp(event):
+        selected_num = document.getElementById("numberSelect").value
         container = document.getElementById("otp-container")
         container.innerHTML = ""
 
@@ -311,22 +307,12 @@
         else:
             container.innerHTML = '<div class="card">کوئی پیغام موصول نہیں ہوا۔</div>'
 
-    def fetch_otp_click(event):
-        selected_num = document.getElementById("numberSelect").value
-        render_otp(selected_num)
-
-    # Background Loop running every 60 seconds (1 minute)
-    async def start_auto_refresh_loop():
-        while True:
-            await fetch_all_data()
-            await asyncio.sleep(60)  # Changed to 60 seconds (1 minute)
-
     # Set Event Listeners
     document.getElementById("countrySelect").addEventListener("change", create_proxy(on_country_change))
-    document.getElementById("fetch-btn").addEventListener("click", create_proxy(fetch_otp_click))
+    document.getElementById("fetch-btn").addEventListener("click", create_proxy(fetch_otp))
 
-    # Start loop on load
-    asyncio.ensure_future(start_auto_refresh_loop())
+    # Fetch data once on load
+    asyncio.ensure_future(fetch_all_data())
   </script>
 
 </body>
