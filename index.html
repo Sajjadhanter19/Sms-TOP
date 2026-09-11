@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Live OTP Receiver - 5 Sec Auto Fetch</title>
+  <title>Live OTP Receiver </title>
 
   <!-- PyScript Core CSS & JavaScript -->
   <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css" />
@@ -146,7 +146,7 @@
       </select>
 
       <button id="fetch-btn">Fetch Live OTP (او ٹی پی حاصل کریں)</button>
-      <div id="status-text">🔄 Initializing 5-second auto sync...</div>
+      <div id="status-text">🔄 Initializing 1-minute auto sync...</div>
     </div>
 
     <div id="otp-container"></div>
@@ -174,7 +174,7 @@
     # Dynamic Country Code Database
     country_db = {
         "1":"🇺🇸 USA/Canada","93":"🇦🇫 Afghanistan","355":"🇦🇱 Albania","213":"🇩🇿 Algeria",
-        "54":"🇦🇷 Argentina","61":"🇦🇺 Australia","43":"🇦TF Austria","994":"🇦🇿 Azerbaijan",
+        "54":"🇦🇷 Argentina","61":"🇦🇺 Australia","43":"🇦🇹 Austria","994":"🇦🇿 Azerbaijan",
         "880":"🇧🇩 Bangladesh","32":"🇧🇪 Belgium","55":"🇧🇷 Brazil","86":"🇨🇳 China",
         "20":"🇪🇬 Egypt","33":"🇫🇷 France","49":"🇩🇪 Germany","91":"🇮🇳 India",
         "62":"🇮🇩 Indonesia","98":"🇮🇷 Iran","964":"🇮🇶 Iraq","39":"🇮🇹 Italy",
@@ -243,13 +243,11 @@
         current_country = c_select.value
 
         if not api_messages:
-            status.textContent = "❌ No data from APIs. Retrying in 5s..."
+            status.textContent = "❌ No data from APIs. Retrying in 1 min..."
             return
 
-        # Extract unique dynamic countries
         countries = sorted(list(set([get_country(item["num"]) for item in api_messages if len(item["num"]) > 5])))
         
-        # Populate country select if empty
         if len(c_select.options) <= 1 or not current_country:
             c_select.innerHTML = '<option value="">-- Choose Country --</option>'
             for c in countries:
@@ -258,9 +256,8 @@
                 opt.textContent = c
                 c_select.appendChild(opt)
 
-        status.textContent = f"⚡ Live Auto-Updated! ({len(api_messages)} Messages Loaded)"
+        status.textContent = f"⚡ Updated! ({len(api_messages)} Messages Loaded - Next sync in 1 min)"
         
-        # If a number is currently selected, refresh its OTP display automatically
         selected_num = document.getElementById("numberSelect").value
         if selected_num:
             render_otp(selected_num)
@@ -318,11 +315,11 @@
         selected_num = document.getElementById("numberSelect").value
         render_otp(selected_num)
 
-    # Infinite Background Loop every 5 seconds
+    # Background Loop running every 60 seconds (1 minute)
     async def start_auto_refresh_loop():
         while True:
             await fetch_all_data()
-            await asyncio.sleep(5)  # Fetch again after 5 seconds
+            await asyncio.sleep(60)  # Changed to 60 seconds (1 minute)
 
     # Set Event Listeners
     document.getElementById("countrySelect").addEventListener("change", create_proxy(on_country_change))
