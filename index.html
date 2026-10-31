@@ -3,314 +3,380 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Live OTP Receiver - Server Country Fetch</title>
-
-  <!-- PyScript Core CSS & JavaScript -->
-  <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css" />
-  <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
-
+  <title>Sajjad Baloch Finder | Pak SIM CNIC Vehicle Lookup</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg-color: #0f172a;
-      --card-bg: #1e293b;
-      --text-color: #f8fafc;
-      --accent-color: #38bdf8;
-      --border-color: #334155;
+      --bg: #070b14;
+      --card: #0f1629;
+      --border: rgba(0, 229, 255, 0.18);
+      --primary: #00e5ff;
+      --primary-dim: rgba(0, 229, 255, 0.12);
+      --text: #e8f0ff;
+      --muted: #8b9bb8;
+      --success: #22c55e;
+      --danger: #ef4444;
     }
-
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: var(--bg-color);
-      color: var(--text-color);
-      margin: 0;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      font-family: 'DM Sans', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      background-image:
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(0, 229, 255, 0.08), transparent),
+        linear-gradient(rgba(0, 229, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 229, 255, 0.03) 1px, transparent 1px);
+      background-size: 100% 100%, 40px 40px, 40px 40px;
     }
-
-    h1 {
-      color: var(--accent-color);
-      text-align: center;
-      margin-bottom: 20px;
+    .container { max-width: 880px; margin: 0 auto; padding: 20px 16px 50px; }
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 0 28px; border-bottom: 1px solid var(--border); margin-bottom: 28px;
     }
-
-    .container {
-      width: 100%;
-      max-width: 550px;
+    .logo { display: flex; align-items: center; gap: 12px; }
+    .logo-icon {
+      width: 46px; height: 46px; border-radius: 12px;
+      background: linear-gradient(135deg, #00e5ff, #0077ff);
+      display: grid; place-items: center; font-weight: 700; font-size: 16px; color: #000;
     }
-
-    .selector-box {
-      background-color: var(--card-bg);
-      border: 1px solid var(--border-color);
-      padding: 20px;
-      border-radius: 10px;
-      margin-bottom: 20px;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+    .logo-text h1 { font-family: 'Space Grotesk', sans-serif; font-size: 1.25rem; font-weight: 700; }
+    .logo-text span { font-size: 0.72rem; color: var(--muted); }
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 6px; font-size: 0.7rem;
+      padding: 5px 12px; border-radius: 999px;
+      background: rgba(34, 197, 94, 0.12); color: var(--success);
+      border: 1px solid rgba(34, 197, 94, 0.25);
     }
-
-    label {
-      display: block;
-      margin-top: 10px;
-      margin-bottom: 5px;
-      font-weight: bold;
-      color: var(--accent-color);
+    .status-badge .dot {
+      width: 6px; height: 6px; border-radius: 50%; background: var(--success);
+      animation: pulse 1.5s infinite;
     }
-
-    select, button {
-      width: 100%;
-      padding: 10px;
-      border-radius: 6px;
-      background-color: #0f172a;
-      color: #fff;
-      border: 1px solid var(--border-color);
-      font-size: 1rem;
-      outline: none;
-      box-sizing: border-box;
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
+    .hero { text-align: center; margin-bottom: 28px; }
+    .hero h2 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(1.75rem, 5vw, 2.5rem); font-weight: 700; line-height: 1.15; margin-bottom: 10px;
     }
-
-    button {
-      margin-top: 15px;
-      background-color: #0284c7;
-      cursor: pointer;
-      font-weight: bold;
-      transition: background 0.2s;
+    .hero p { color: var(--muted); font-size: 0.95rem; max-width: 480px; margin: 0 auto; }
+    .search-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 18px;
+      padding: 22px; box-shadow: 0 18px 45px rgba(0,0,0,0.4);
     }
-
-    button:hover {
-      background-color: #0369a1;
+    .search-row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .search-row input {
+      flex: 1; min-width: 180px; background: #0a101f; border: 1px solid var(--border);
+      border-radius: 12px; padding: 14px 16px; color: var(--text); font-size: 1rem;
+      font-family: 'JetBrains Mono', monospace; outline: none;
     }
-
-    #status-text {
-      font-size: 0.85rem;
-      color: #38bdf8;
-      margin-top: 10px;
-      text-align: center;
-      font-weight: bold;
+    .search-row input:focus { border-color: var(--primary); }
+    .search-row input::placeholder { color: #5a6a85; }
+    .btn {
+      border: none; border-radius: 12px; padding: 14px 22px; font-weight: 600;
+      font-size: 0.95rem; cursor: pointer; transition: all 0.2s; font-family: inherit;
     }
-
-    #otp-container {
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
+    .btn-primary { background: linear-gradient(135deg, #00e5ff, #00b4d8); color: #001018; }
+    .btn-primary:hover:not(:disabled) { filter: brightness(1.1); transform: translateY(-1px); }
+    .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; }
+    .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+    .btn-ghost:hover { background: var(--primary-dim); color: var(--primary); }
+    .hint {
+      margin-top: 12px; font-size: 0.78rem; color: var(--muted);
+      display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;
     }
-
-    .card {
-      background-color: var(--card-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 10px;
-      padding: 15px;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+    .result-area { margin-top: 26px; min-height: 60px; }
+    .loading { text-align: center; padding: 40px; color: var(--muted); }
+    .spinner {
+      width: 36px; height: 36px; border: 3px solid var(--border);
+      border-top-color: var(--primary); border-radius: 50%;
+      animation: spin 0.7s linear infinite; margin: 0 auto 12px;
     }
-
-    .field {
-      margin: 6px 0;
-      font-size: 0.95rem;
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .error-box {
+      background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #fca5a5; padding: 16px 18px; border-radius: 12px; font-size: 0.9rem;
     }
-
-    .field code {
-      background-color: #0f172a;
-      padding: 2px 6px;
-      border-radius: 4px;
-      color: var(--accent-color);
-      font-family: monospace;
-      font-size: 1.1rem;
+    .result-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden;
     }
-
-    .message-box {
-      background-color: #0f172a;
-      padding: 10px;
-      border-radius: 6px;
-      margin-top: 10px;
-      font-family: monospace;
-      white-space: pre-wrap;
-      word-break: break-word;
-      border-left: 3px solid var(--accent-color);
+    .result-header {
+      background: linear-gradient(90deg, rgba(0,229,255,0.12), transparent);
+      padding: 16px 20px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+    }
+    .result-header h3 { font-family: 'Space Grotesk', sans-serif; font-size: 1.25rem; }
+    .result-body { padding: 20px; }
+    .info-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 12px; margin-bottom: 18px;
+    }
+    .info-item {
+      background: #0a101f; border-radius: 10px; padding: 12px 14px;
+      border: 1px solid rgba(255,255,255,0.04);
+    }
+    .info-item label {
+      display: block; font-size: 0.68rem; text-transform: uppercase;
+      letter-spacing: 0.06em; color: var(--muted); margin-bottom: 4px;
+    }
+    .info-item .val {
+      font-family: 'JetBrains Mono', monospace; font-size: 0.95rem; word-break: break-all;
+    }
+    .section-title {
+      font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.07em;
+      color: var(--primary); margin: 18px 0 10px; font-weight: 600;
+    }
+    .numbers-list { display: flex; flex-wrap: wrap; gap: 8px; }
+    .number-chip {
+      background: var(--primary-dim); border: 1px solid rgba(0,229,255,0.25);
+      color: var(--primary); padding: 7px 12px; border-radius: 8px;
+      font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;
+    }
+    .sim-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    .sim-table th {
+      text-align: left; padding: 8px 10px; color: var(--muted); font-weight: 500;
+      border-bottom: 1px solid var(--border);
+    }
+    .sim-table td {
+      padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.04);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .raw-box {
+      margin-top: 16px; background: #060a12; border: 1px solid var(--border);
+      border-radius: 10px; padding: 12px; font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem; color: #9ab; max-height: 220px; overflow: auto; white-space: pre-wrap;
+    }
+    footer {
+      margin-top: 44px; text-align: center; padding-top: 22px;
+      border-top: 1px solid var(--border); color: var(--muted); font-size: 0.85rem;
+    }
+    footer strong { color: var(--primary); }
+    .disclaimer { margin-top: 6px; font-size: 0.72rem; opacity: 0.7; }
+    @media (max-width: 520px) {
+      .search-row { flex-direction: column; }
+      .btn { width: 100%; }
     }
   </style>
 </head>
 <body>
-
   <div class="container">
-    <h1>📱 Dynamic Live OTP Receiver</h1>
+    <header>
+      <div class="logo">
+        <div class="logo-icon">SB</div>
+        <div class="logo-text">
+          <h1>Sajjad Baloch Finder</h1>
+          <span>Pak SIM • CNIC • Vehicle Lookup</span>
+        </div>
+      </div>
+      <div class="status-badge"><span class="dot"></span> API Online</div>
+    </header>
 
-    <div class="selector-box">
-      <label for="countrySelect">1. Available Countries (سرور سے دستیاب ملک):</label>
-      <select id="countrySelect">
-        <option value="">-- Fetching Available Countries... --</option>
-      </select>
+    <section class="hero">
+      <h2>Ultimate Number Finder</h2>
+      <p>Phone Number یا CNIC ڈال کر SIM Owner اور متعلقہ معلومات حاصل کریں۔</p>
+    </section>
 
-      <label for="numberSelect">2. Available Numbers (نمبر منتخب کریں):</label>
-      <select id="numberSelect">
-        <option value="">-- Select Country First --</option>
-      </select>
-
-      <button id="fetch-btn">Fetch Live OTP (او ٹی پی حاصل کریں)</button>
-      <div id="status-text">🔄 Requesting Server...</div>
+    <div class="search-card">
+      <div class="search-row">
+        <input type="text" id="queryInput" placeholder="0300xxxxxxx  یا  3520212345671" autocomplete="off" spellcheck="false" />
+        <button class="btn btn-ghost" id="testBtn">Test CNIC</button>
+        <button class="btn btn-primary" id="searchBtn">Search</button>
+      </div>
+      <div class="hint">
+        <span>کام کرنے والا مثال: <b>3520212345671</b> یا <b>03126238708</b></span>
+        <span id="coinInfo">Ready</span>
+      </div>
     </div>
 
-    <div id="otp-container"></div>
+    <div class="result-area" id="resultArea"></div>
+
+    <footer>
+      <p>Developed by <strong>سجاد بلوچ (Sajjad Baloch)</strong></p>
+      <p class="disclaimer">صرف معلوماتی مقاصد کے لیے۔ تمام قوانین کی پابندی صارف کی ذمہ داری ہے۔</p>
+    </footer>
   </div>
 
-  <!-- PyScript Section -->
-  <script type="py">
-    import re
-    import json
-    import asyncio
-    from datetime import datetime
-    from js import document, fetch
-    from pyodide.ffi import create_proxy
+  <script>
+    const API_BASE = "https://identra.janialexa610.workers.dev";
+    const API_KEY  = "identra-client-key-2026";
 
-    # ALL 4 APIs
-    PROX = "https://api.allorigins.win/raw?url="
-    API_LIST = [
-        PROX + "http://147.135.212.197/crapi/st/viewstats?token=SE5XREZBUzRfTpVnX2dQh3NQcYB2dZBWQ4JpXVxmblp2alCDi25oZg==",
-        PROX + "http://147.135.212.197/crapi/st/viewstats?token=RVdWRElBUzRGcW9WeneNcmd2cGV9ZJd8e29PVlyPcFxeamxSgWVXfw==",
-        PROX + "http://147.135.212.197/crapi/had/viewstats?token=SVVSRzRSQmhXkYuBilFrR2iVZoldZ1dfX4N4WGeHhHdmdFhphYZw==",
-        "https://pscall.net/restapi/smsreport?key=SFNYSj1SS16DgYdyf4KIgA==&start=0&length=50"
-    ]
-
-    country_db = {
-        "1":"🇺🇸 USA/Canada","93":"🇦🇫 Afghanistan","355":"🇦🇱 Albania","213":"🇩🇿 Algeria",
-        "54":"🇦🇷 Argentina","61":"🇦🇺 Australia","43":"🇦🇹 Austria","994":"🇦🇿 Azerbaijan",
-        "880":"🇧🇩 Bangladesh","32":"🇧🇪 Belgium","55":"🇧🇷 Brazil","86":"🇨🇳 China",
-        "20":"🇪🇬 Egypt","33":"🇫🇷 France","49":"🇩🇪 Germany","91":"🇮🇳 India",
-        "62":"🇮🇩 Indonesia","98":"🇮🇷 Iran","964":"🇮🇶 Iraq","39":"🇮🇹 Italy",
-        "81":"🇯🇵 Japan","962":"🇯🇴 Jordan","254":"🇰🇪 Kenya","965":"🇰🇼 Kuwait",
-        "60":"🇲🇾 Malaysia","52":"🇲🇽 Mexico","31":"🇳🇱 Netherlands","92":"🇵🇰 Pakistan",
-        "970":"🇵🇸 Palestine","63":"🇵🇭 Philippines","48":"🇵🇱 Poland","351":"🇵🇹 Portugal",
-        "974":"🇶🇦 Qatar","7":"🇷🇺 Russia","966":"🇸🇦 Saudi Arabia","65":"🇸🇬 Singapore",
-        "27":"🇿🇦 South Africa","82":"🇰🇷 South Korea","34":"🇪🇸 Spain","94":"🇱🇰 Sri Lanka",
-        "46":"🇸🇪 Sweden","41":"🇨🇭 Switzerland","886":"🇹🇼 Taiwan","66":"🇹🇭 Thailand",
-        "90":"🇹🇷 Turkey","971":"🇦🇪 UAE","44":"🇬🇧 UK","84":"🇻🇳 Vietnam","967":"🇾🇪 Yemen"
+    function freshSalt() {
+      const arr = new Uint8Array(20);
+      crypto.getRandomValues(arr);
+      return Array.from(arr).map(b => b.toString(16).padStart(2, "0")).join("") + Date.now();
     }
 
-    api_messages = []
+    function cleanQuery(q) {
+      return (q || "").trim().replace(/[\s\-]/g, "");
+    }
 
-    def get_country(number):
-        clean = str(number).replace("+", "").replace(" ", "").replace("-", "")
-        for l in range(4, 0, -1):
-            prefix = clean[:l]
-            if prefix in country_db:
-                return country_db[prefix]
-        return "🌍 Other Countries"
+    const input      = document.getElementById("queryInput");
+    const searchBtn  = document.getElementById("searchBtn");
+    const testBtn    = document.getElementById("testBtn");
+    const resultArea = document.getElementById("resultArea");
+    const coinInfo   = document.getElementById("coinInfo");
 
-    def extract_code(msg):
-        match = re.search(r'\b\d{3}[-\s]\d{3}\b|\b\d{4,8}\b', str(msg))
-        return match.group(0) if match else "N/A"
+    async function doLookup(rawQuery) {
+      const q = cleanQuery(rawQuery);
+      if (!q) {
+        showError("براہ کرم فون نمبر یا CNIC درج کریں۔");
+        return;
+      }
 
-    async def fetch_single_api(url):
-        try:
-            response = await fetch(url)
-            text = await response.text()
-            data = json.loads(text)
+      setLoading(true);
+      searchBtn.disabled = true;
+      const salt = freshSalt();
 
-            if isinstance(data, list):
-                for row in data:
-                    if len(row) >= 3:
-                        api_messages.append({
-                            "service": row[0] or "Unknown",
-                            "num": str(row[1] or ""),
-                            "msg": row[2] or "",
-                            "date": row[3] if len(row) > 3 else ""
-                        })
-            elif isinstance(data, dict) and data.get("result") == "success":
-                for item in data.get("data", []):
-                    api_messages.append({
-                        "service": item.get("cli", "Unknown"),
-                        "num": str(item.get("num", "")),
-                        "msg": item.get("sms", ""),
-                        "date": item.get("dateadded", "")
-                    })
-        except Exception as e:
-            pass
+      try {
+        const res = await fetch(`\( {API_BASE}/api/lookup?q= \){encodeURIComponent(q)}`, {
+          method: "GET",
+          headers: {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "x-api-key": API_KEY,
+            "x-device-salt": salt
+          }
+        });
 
-    async def request_server_for_countries():
-        global api_messages
-        api_messages = []
-        status = document.getElementById("status-text")
-        c_select = document.getElementById("countrySelect")
-        
-        status.textContent = "🔄 Requesting server for available countries..."
+        const data = await res.json();
 
-        for url in API_LIST:
-            await fetch_single_api(url)
+        if (data.userMeta?.remainingCoins !== undefined) {
+          coinInfo.textContent = "Coins: " + data.userMeta.remainingCoins;
+        }
 
-        # Extract available countries returned by the server
-        available_countries = sorted(list(set([
-            get_country(item["num"]) for item in api_messages if len(item["num"]) > 5
-        ])))
+        if (data.error) {
+          showError(data.error);
+          return;
+        }
 
-        c_select.innerHTML = '<option value="">-- Choose Country --</option>'
+        if (data.citizen && data.citizen.success) {
+          renderResult(data);
+        } else {
+          showError("کوئی ریکارڈ نہیں ملا۔");
+        }
+      } catch (err) {
+        showError("نیٹ ورک خرابی: " + err.message);
+      } finally {
+        setLoading(false);
+        searchBtn.disabled = false;
+      }
+    }
 
-        if available_countries:
-            for country in available_countries:
-                opt = document.createElement("option")
-                opt.value = country
-                opt.textContent = country
-                c_select.appendChild(opt)
+    function setLoading(on) {
+      if (on) {
+        resultArea.innerHTML = `<div class="loading"><div class="spinner"></div><div>Searching database...</div></div>`;
+      }
+    }
 
-            status.textContent = f"✅ Server returned {len(available_countries)} available countries!"
-        else:
-            status.textContent = "❌ No active numbers/countries returned from server."
+    function showError(msg) {
+      resultArea.innerHTML = `<div class="error-box">${escapeHtml(msg)}</div>`;
+    }
 
-    def on_country_change(event):
-        selected_country = document.getElementById("countrySelect").value
-        n_select = document.getElementById("numberSelect")
-        n_select.innerHTML = '<option value="">-- Choose Number --</option>'
+    function renderResult(data) {
+      const c = data.citizen || {};
+      const numbers = c.numbers || [];
+      const sims = c.simRecords || [];
+      const vehicles = data.vehicles || [];
+      const vehicleNotes = data.vehicleNotes || [];
 
-        if not selected_country:
-            return
+      let html = `
+        <div class="result-card">
+          <div class="result-header">
+            <h3>${escapeHtml(c.name || "Unknown")}</h3>
+            <span class="status-badge"><span class="dot"></span> Found</span>
+          </div>
+          <div class="result-body">
+            <div class="info-grid">
+              <div class="info-item">
+                <label>CNIC</label>
+                <div class="val">${escapeHtml(c.cnic || "—")}</div>
+              </div>
+              <div class="info-item">
+                <label>Address</label>
+                <div class="val">${escapeHtml(c.address || "N/A")}</div>
+              </div>
+              <div class="info-item">
+                <label>Total Numbers</label>
+                <div class="val">${numbers.length}</div>
+              </div>
+              <div class="info-item">
+                <label>Network</label>
+                <div class="val">${escapeHtml(c.network || "—")}</div>
+              </div>
+            </div>`;
 
-        filtered_numbers = sorted(list(set([
-            item["num"] for item in api_messages 
-            if get_country(item["num"]) == selected_country and len(item["num"]) > 5
-        ])))
+      if (numbers.length) {
+        html += `
+          <div class="section-title">Registered Numbers</div>
+          <div class="numbers-list">
+            \( {numbers.map(n => `<span class="number-chip"> \){escapeHtml(n)}</span>`).join("")}
+          </div>`;
+      }
 
-        for num in filtered_numbers:
-            opt = document.createElement("option")
-            opt.value = num
-            opt.textContent = f"+{num}"
-            n_select.appendChild(opt)
+      if (sims.length) {
+        html += `
+          <div class="section-title">SIM Records Detail</div>
+          <div style="overflow-x:auto">
+            <table class="sim-table">
+              <thead><tr><th>Mobile</th><th>Name</th><th>CNIC</th><th>Address</th></tr></thead>
+              <tbody>
+                ${sims.map(s => `
+                  <tr>
+                    <td>${escapeHtml(s.mobile || "—")}</td>
+                    <td>${escapeHtml(s.name || "—")}</td>
+                    <td>${escapeHtml(s.cnic || "—")}</td>
+                    <td>${escapeHtml(s.address || "—")}</td>
+                  </tr>`).join("")}
+              </tbody>
+            </table>
+          </div>`;
+      }
 
-    def fetch_otp(event):
-        selected_num = document.getElementById("numberSelect").value
-        container = document.getElementById("otp-container")
-        container.innerHTML = ""
+      if (vehicles.length) {
+        html += `
+          <div class="section-title">Vehicles (${vehicles.length})</div>
+          <div style="overflow-x:auto">
+            <table class="sim-table">
+              <thead><tr><th>Details</th></tr></thead>
+              <tbody>
+                \( {vehicles.map(v => `<tr><td> \){escapeHtml(JSON.stringify(v))}</td></tr>`).join("")}
+              </tbody>
+            </table>
+          </div>`;
+      } else {
+        html += `<div class="section-title">Vehicles</div><div style="color:var(--muted);font-size:0.85rem">No vehicle records found.</div>`;
+      }
 
-        if not selected_num:
-            container.innerHTML = '<div class="card">براہ کرم نمبر منتخب کریں۔</div>'
-            return
+      if (vehicleNotes.length) {
+        html += `
+          <div class="section-title">Vehicle Notes</div>
+          <div style="font-size:0.85rem;color:var(--muted)">
+            ${vehicleNotes.map(n => `<div style="margin-bottom:4px">• ${escapeHtml(n)}</div>`).join("")}
+          </div>`;
+      }
 
-        matched_messages = [item for item in api_messages if str(item["num"]) == str(selected_num)]
+      html += `
+            <div class="section-title">Full API Response</div>
+            <div class="raw-box">${escapeHtml(JSON.stringify(data, null, 2))}</div>
+          </div>
+        </div>`;
 
-        if matched_messages:
-            for item in matched_messages:
-                code = extract_code(item["msg"])
-                country = get_country(item["num"])
-                date_str = item["date"] or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+      resultArea.innerHTML = html;
+    }
 
-                card_html = f'''
-                    <div class="card">
-                        <div class="field"><b>🌍 Country:</b> {country}</div>
-                        <div class="field"><b>📱 Number:</b> <code>+{item["num"]}</code></div>
-                        <div class="field"><b>🛠 Service:</b> <code>{item["service"]}</code></div>
-                        <div class="field"><b>🔑 OTP Code:</b> <code>{code}</code></div>
-                        <div class="field"><b>⌚ Time:</b> {date_str}</div>
-                        <div class="message-box">{item["msg"]}</div>
-                    </div>
-                '''
-                container.innerHTML += card_html
-        else:
-            container.innerHTML = '<div class="card">کوئی پیغام موصول نہیں ہوا۔</div>'
+    function escapeHtml(str) {
+      return String(str ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
 
-    # Set Event Listeners
-    document.getElementById("countrySelect").addEventListener("change", create_proxy(on_country_change))
-    document.getElementById("fetch-btn").addEventListener("click", create_proxy(fetch_otp))
-
-    # Initial Request to Server
-    asyncio.ensure_future(request_server_for_countries())
+    searchBtn.addEventListener("click", () => doLookup(input.value));
+    input.addEventListener("keydown", e => { if (e.key === "Enter") doLookup(input.value); });
+    testBtn.addEventListener("click", () => {
+      input.value = "3520212345671";
+      doLookup(input.value);
+    });
   </script>
-
 </body>
 </html>
