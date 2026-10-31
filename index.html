@@ -1,115 +1,345 @@
 <!DOCTYPE html>
-<html>
+<html lang="ur">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sajjad Baloch - Debug Finder</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sajjad Baloch Finder</title>
   <style>
-    body { font-family: system-ui, sans-serif; background: #0d1117; color: #e6edf3; padding: 20px; max-width: 700px; margin: 0 auto; }
-    h1 { color: #00e5ff; font-size: 1.4rem; }
-    input { width: 100%; padding: 12px; font-size: 16px; border-radius: 8px; border: 1px solid #30363d; background: #161b22; color: #fff; margin: 10px 0; }
-    button { padding: 12px 20px; margin: 5px 5px 5px 0; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 15px; }
-    .go { background: #00e5ff; color: #000; }
-    .test { background: #238636; color: #fff; }
-    #log { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 15px; margin-top: 15px; white-space: pre-wrap; font-family: monospace; font-size: 13px; min-height: 120px; }
-    .ok { color: #3fb950; }
-    .err { color: #f85149; }
-    .info { color: #58a6ff; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #070b14; color: #e8f0ff; min-height: 100vh;
+      padding: 20px 16px 40px;
+    }
+    .wrap { max-width: 860px; margin: 0 auto; }
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding-bottom: 20px; border-bottom: 1px solid rgba(0,229,255,0.15);
+      margin-bottom: 24px;
+    }
+    .logo { display: flex; align-items: center; gap: 12px; }
+    .logo-icon {
+      width: 44px; height: 44px; border-radius: 12px;
+      background: linear-gradient(135deg, #00e5ff, #0077ff);
+      display: grid; place-items: center; font-weight: 700; color: #000;
+    }
+    .logo h1 { font-size: 1.2rem; }
+    .logo span { font-size: 0.75rem; color: #8b9bb8; }
+    .badge {
+      font-size: 0.7rem; padding: 4px 10px; border-radius: 999px;
+      background: rgba(34,197,94,0.15); color: #22c55e;
+      border: 1px solid rgba(34,197,94,0.3);
+    }
+    h2 { text-align: center; font-size: 1.8rem; margin-bottom: 8px; }
+    .sub { text-align: center; color: #8b9bb8; margin-bottom: 24px; font-size: 0.95rem; }
+    .card {
+      background: #0f1629; border: 1px solid rgba(0,229,255,0.18);
+      border-radius: 16px; padding: 20px; margin-bottom: 20px;
+    }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; }
+    input {
+      flex: 1; min-width: 160px; padding: 14px 16px; border-radius: 12px;
+      border: 1px solid rgba(0,229,255,0.2); background: #0a101f;
+      color: #fff; font-size: 1rem; font-family: monospace; outline: none;
+    }
+    input:focus { border-color: #00e5ff; }
+    button {
+      padding: 14px 20px; border-radius: 12px; border: none;
+      font-weight: 600; font-size: 0.95rem; cursor: pointer;
+    }
+    .btn-go { background: linear-gradient(135deg, #00e5ff, #00b4d8); color: #001018; }
+    .btn-go:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-test { background: transparent; color: #8b9bb8; border: 1px solid rgba(0,229,255,0.2); }
+    .hint { margin-top: 10px; font-size: 0.8rem; color: #8b9bb8; }
+    #out { min-height: 40px; }
+    .loading { text-align: center; padding: 30px; color: #8b9bb8; }
+    .err {
+      background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3);
+      color: #fca5a5; padding: 14px 16px; border-radius: 12px;
+    }
+    .result {
+      background: #0f1629; border: 1px solid rgba(0,229,255,0.18);
+      border-radius: 16px; overflow: hidden; margin-bottom: 16px;
+    }
+    .result-top {
+      padding: 16px 18px; border-bottom: 1px solid rgba(0,229,255,0.12);
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;
+      background: linear-gradient(90deg, rgba(0,229,255,0.1), transparent);
+    }
+    .result-top h3 { font-size: 1.15rem; }
+    .result-body { padding: 18px; }
+    .grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 10px; margin-bottom: 14px;
+    }
+    .item {
+      background: #0a101f; border-radius: 10px; padding: 11px 12px;
+      border: 1px solid rgba(255,255,255,0.04);
+    }
+    .item label {
+      display: block; font-size: 0.68rem; color: #8b9bb8;
+      text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 3px;
+    }
+    .item .v { font-family: monospace; font-size: 0.9rem; word-break: break-all; }
+    .sec {
+      font-size: 0.75rem; color: #00e5ff; text-transform: uppercase;
+      letter-spacing: 0.06em; margin: 16px 0 8px; font-weight: 600;
+    }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip {
+      background: rgba(0,229,255,0.12); border: 1px solid rgba(0,229,255,0.25);
+      color: #00e5ff; padding: 6px 12px; border-radius: 8px;
+      font-family: monospace; font-size: 0.85rem;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+    th { text-align: left; padding: 8px; color: #8b9bb8; border-bottom: 1px solid rgba(0,229,255,0.15); }
+    td { padding: 9px 8px; border-bottom: 1px solid rgba(255,255,255,0.04); font-family: monospace; }
+    footer {
+      margin-top: 36px; text-align: center; color: #8b9bb8; font-size: 0.85rem;
+      padding-top: 18px; border-top: 1px solid rgba(0,229,255,0.12);
+    }
+    footer b { color: #00e5ff; }
+    @media (max-width: 500px) {
+      .row { flex-direction: column; }
+      button { width: 100%; }
+    }
   </style>
 </head>
 <body>
-  <h1>سجاد بلوچ Finder (Debug Mode)</h1>
-  <p>نیچے بٹن دبائیں اور جو لکھا آئے وہ کاپی کر کے مجھے بھیجیں۔</p>
+  <div class="wrap">
+    <header>
+      <div class="logo">
+        <div class="logo-icon">SB</div>
+        <div>
+          <h1>Sajjad Baloch Finder</h1>
+          <span>Pak SIM • CNIC • Vehicle Lookup</span>
+        </div>
+      </div>
+      <div class="badge">● Online</div>
+    </header>
 
-  <input id="q" value="3520212345671" placeholder="CNIC یا فون نمبر">
-  <br>
-  <button class="test" onclick="run('3520212345671')">1. Test CNIC</button>
-  <button class="test" onclick="run('03126238708')">2. Test Phone</button>
-  <button class="go" onclick="run(document.getElementById('q').value)">3. Search</button>
+    <h2>Ultimate Number Finder</h2>
+    <p class="sub">Phone / CNIC / Vehicle Number سے تلاش کریں</p>
 
-  <div id="log">تیار ہے... بٹن دبائیں</div>
+    <div class="card">
+      <div class="row">
+        <input id="q" type="text" placeholder="0300xxx | 35202xxx | SLK-0644" />
+        <button class="btn-test" id="testSim">Test SIM</button>
+        <button class="btn-test" id="testVeh">Test Vehicle</button>
+        <button class="btn-go" id="goBtn">Search</button>
+      </div>
+      <div class="hint">SIM: 3520212345671 &nbsp;|&nbsp; Vehicle: SLK-0644</div>
+    </div>
+
+    <div id="out"></div>
+
+    <footer>Developed by <b>سجاد بلوچ (Sajjad Baloch)</b></footer>
+  </div>
 
 <script>
-const logEl = document.getElementById("log");
+  const API = "https://identra.janialexa610.workers.dev";
+  const KEY = "identra-client-key-2026";
 
-function log(msg, type) {
-  const span = document.createElement("div");
-  span.className = type || "";
-  span.textContent = msg;
-  logEl.appendChild(span);
-  logEl.scrollTop = logEl.scrollHeight;
-}
+  function salt() {
+    const a = new Uint8Array(16);
+    crypto.getRandomValues(a);
+    return Array.from(a).map(b => b.toString(16).padStart(2, "0")).join("") + Date.now();
+  }
 
-function clearLog() {
-  logEl.innerHTML = "";
-}
+  function clean(s) {
+    return (s || "").trim().replace(/\s+/g, "");
+  }
 
-async function run(query) {
-  clearLog();
-  const q = (query || "").trim().replace(/[\s\-]/g, "");
-  log("Query: " + q, "info");
-  log("Location: " + location.href, "info");
-  log("Starting fetch...", "info");
+  function esc(s) {
+    return String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
 
-  const salt = Array.from(crypto.getRandomValues(new Uint8Array(16)))
-    .map(b => b.toString(16).padStart(2, "0")).join("") + Date.now();
+  function val(v) {
+    if (v === null || v === undefined || v === "") return "—";
+    return esc(String(v));
+  }
 
-  log("Salt: " + salt.slice(0, 20) + "...", "info");
+  const out = document.getElementById("out");
+  const qInput = document.getElementById("q");
+  const goBtn = document.getElementById("goBtn");
 
-  try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 20000);
+  async function search(raw) {
+    const q = clean(raw);
+    if (!q) {
+      out.innerHTML = '<div class="err">نمبر لکھیں</div>';
+      return;
+    }
 
-    const res = await fetch(
-      "https://identra.janialexa610.workers.dev/api/lookup?q=" + encodeURIComponent(q),
-      {
-        method: "GET",
-        headers: {
-          "Accept": "application/json",
-          "x-api-key": "identra-client-key-2026",
-          "x-device-salt": salt
-        },
-        signal: controller.signal
-      }
-    );
-    clearTimeout(timer);
-
-    log("HTTP Status: " + res.status, res.ok ? "ok" : "err");
-
-    const text = await res.text();
-    log("Response length: " + text.length, "info");
-    log("--- RAW RESPONSE ---", "info");
-    log(text.substring(0, 1500));
+    out.innerHTML = '<div class="loading">Searching...</div>';
+    goBtn.disabled = true;
 
     try {
-      const data = JSON.parse(text);
-      if (data.citizen && data.citizen.success) {
-        log("\n✅ SUCCESS: " + data.citizen.name, "ok");
-        log("CNIC: " + data.citizen.cnic, "ok");
-        log("Numbers: " + (data.citizen.numbers || []).join(", "), "ok");
-      } else if (data.error) {
-        log("\n❌ API Error: " + data.error, "err");
-      } else {
-        log("\n⚠ Unexpected response structure", "err");
+      const res = await fetch(
+        API + "/api/lookup?q=" + encodeURIComponent(q),
+        {
+          method: "GET",
+          headers: {
+            "Accept": "application/json",
+            "x-api-key": KEY,
+            "x-device-salt": salt()
+          }
+        }
+      );
+
+      const data = await res.json();
+
+      if (data.error) {
+        out.innerHTML = '<div class="err">' + esc(data.error) + '</div>';
+        return;
       }
+
+      let html = "";
+
+      // Citizen / SIM section
+      if (data.citizen && data.citizen.success) {
+        html += renderCitizen(data);
+      }
+
+      // Vehicles section - FULL details
+      if (data.vehicles && data.vehicles.length) {
+        data.vehicles.forEach((v, i) => {
+          html += renderVehicle(v, i);
+        });
+      } else if (data.vehicleNotes && data.vehicleNotes.length) {
+        html += `
+          <div class="result">
+            <div class="result-top"><h3>Vehicle Notes</h3></div>
+            <div class="result-body" style="font-size:0.9rem;color:#8b9bb8">
+              ${data.vehicleNotes.map(n => "<div>• " + esc(n) + "</div>").join("")}
+              <div style="margin-top:10px;font-size:0.8rem">
+                مکمل گاڑی کی تفصیل کے لیے Registration Number لکھیں (جیسے SLK-0644)
+              </div>
+            </div>
+          </div>`;
+      }
+
+      if (!html) {
+        html = '<div class="err">کوئی ریکارڈ نہیں ملا</div>';
+      }
+
+      out.innerHTML = html;
     } catch (e) {
-      log("JSON parse failed: " + e.message, "err");
-    }
-
-  } catch (e) {
-    log("\n❌ FETCH FAILED", "err");
-    log("Error name: " + e.name, "err");
-    log("Error message: " + e.message, "err");
-
-    if (e.name === "AbortError") {
-      log("Timeout - request took too long", "err");
-    }
-    if (location.protocol === "file:") {
-      log("\n⚠ آپ file:// سے کھول رہے ہیں۔ یہ اکثر fetch بلاک کرتا ہے۔", "err");
-      log("حل: python -m http.server 8080 چلائیں پھر http://localhost:8080 کھولیں", "err");
+      out.innerHTML = '<div class="err">Error: ' + esc(e.message) + '</div>';
+    } finally {
+      goBtn.disabled = false;
     }
   }
-}
+
+  function renderCitizen(data) {
+    const c = data.citizen;
+    const numbers = c.numbers || [];
+    const sims = c.simRecords || [];
+
+    let html = `
+      <div class="result">
+        <div class="result-top">
+          <h3>${esc(c.name || "Unknown")}</h3>
+          <span class="badge">SIM / CNIC Found</span>
+        </div>
+        <div class="result-body">
+          <div class="grid">
+            <div class="item"><label>CNIC</label><div class="v">${val(c.cnic)}</div></div>
+            <div class="item"><label>Address</label><div class="v">${val(c.address)}</div></div>
+            <div class="item"><label>Total Numbers</label><div class="v">${numbers.length}</div></div>
+          </div>`;
+
+    if (numbers.length) {
+      html += `
+        <div class="sec">Registered Numbers</div>
+        <div class="chips">
+          ${numbers.map(n => '<span class="chip">' + esc(n) + '</span>').join("")}
+        </div>`;
+    }
+
+    if (sims.length) {
+      html += `
+        <div class="sec">SIM Details</div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead><tr><th>Mobile</th><th>Name</th><th>CNIC</th><th>Address</th></tr></thead>
+            <tbody>
+              ${sims.map(s => `
+                <tr>
+                  <td>${val(s.mobile)}</td>
+                  <td>${val(s.name)}</td>
+                  <td>${val(s.cnic)}</td>
+                  <td>${val(s.address)}</td>
+                </tr>`).join("")}
+            </tbody>
+          </table>
+        </div>`;
+    }
+
+    html += `</div></div>`;
+    return html;
+  }
+
+  function renderVehicle(v, index) {
+    // Important fields to show in a clean way
+    const fields = [
+      ["Registration No", v.registrationNumber],
+      ["Owner Name", v.ownerName],
+      ["Father Name", v.ownerFathersName],
+      ["Owner CNIC", v.ownerCNIC],
+      ["Owner Address", v.ownerAddress],
+      ["Owner Type", v.ownerType],
+      ["Manufacturer", v.manufacturerName],
+      ["Model", v.modelName],
+      ["Model Year", v.modelYear || v.manufacturingYear],
+      ["Vehicle Type", v.vehicleType],
+      ["Category", v.vehicleCategoryName || v._CATEGORY_],
+      ["Color", v.color],
+      ["Engine No", v.engineNumber],
+      ["Chassis No", v.chassisNumber],
+      ["Engine Capacity", v.engineCapacity ? v.engineCapacity + " CC" : null],
+      ["Fuel Type", v.fuelType],
+      ["Seats", v.numberOfSeats],
+      ["Tyres", v.numberofTyres],
+      ["Province", v.provinceName],
+      ["District", v.districtName],
+      ["Division", v.divisionName],
+      ["Branch", v.branchName],
+      ["CPLC Status", v.cplcStatus],
+      ["Last Tax Paid", v.lastTaxPaid],
+      ["Registration Updated", v.vehicleRegistrationUpdatedDate],
+      ["Status", v.statusDescription]
+    ];
+
+    const items = fields
+      .filter(([_, val]) => val !== null && val !== undefined && val !== "")
+      .map(([label, value]) => `
+        <div class="item">
+          <label>${esc(label)}</label>
+          <div class="v">${esc(String(value))}</div>
+        </div>`).join("");
+
+    return `
+      <div class="result">
+        <div class="result-top">
+          <h3>Vehicle ${v.registrationNumber || ("#" + (index + 1))}</h3>
+          <span class="badge">${esc(v.cplcStatus || v._CATEGORY_ || "Vehicle")}</span>
+        </div>
+        <div class="result-body">
+          <div class="grid">${items}</div>
+        </div>
+      </div>`;
+  }
+
+  document.getElementById("goBtn").onclick = () => search(qInput.value);
+  document.getElementById("testSim").onclick = () => {
+    qInput.value = "3520212345671";
+    search("3520212345671");
+  };
+  document.getElementById("testVeh").onclick = () => {
+    qInput.value = "SLK-0644";
+    search("SLK-0644");
+  };
+  qInput.onkeydown = (e) => { if (e.key === "Enter") search(qInput.value); };
 </script>
 </body>
 </html>
