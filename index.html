@@ -1,382 +1,115 @@
 <!DOCTYPE html>
-<html lang="ur">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sajjad Baloch Finder | Pak SIM CNIC Vehicle Lookup</title>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sajjad Baloch - Debug Finder</title>
   <style>
-    :root {
-      --bg: #070b14;
-      --card: #0f1629;
-      --border: rgba(0, 229, 255, 0.18);
-      --primary: #00e5ff;
-      --primary-dim: rgba(0, 229, 255, 0.12);
-      --text: #e8f0ff;
-      --muted: #8b9bb8;
-      --success: #22c55e;
-      --danger: #ef4444;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: 'DM Sans', system-ui, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      background-image:
-        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(0, 229, 255, 0.08), transparent),
-        linear-gradient(rgba(0, 229, 255, 0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 229, 255, 0.03) 1px, transparent 1px);
-      background-size: 100% 100%, 40px 40px, 40px 40px;
-    }
-    .container { max-width: 880px; margin: 0 auto; padding: 20px 16px 50px; }
-    header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 14px 0 28px; border-bottom: 1px solid var(--border); margin-bottom: 28px;
-    }
-    .logo { display: flex; align-items: center; gap: 12px; }
-    .logo-icon {
-      width: 46px; height: 46px; border-radius: 12px;
-      background: linear-gradient(135deg, #00e5ff, #0077ff);
-      display: grid; place-items: center; font-weight: 700; font-size: 16px; color: #000;
-    }
-    .logo-text h1 { font-family: 'Space Grotesk', sans-serif; font-size: 1.25rem; font-weight: 700; }
-    .logo-text span { font-size: 0.72rem; color: var(--muted); }
-    .status-badge {
-      display: inline-flex; align-items: center; gap: 6px; font-size: 0.7rem;
-      padding: 5px 12px; border-radius: 999px;
-      background: rgba(34, 197, 94, 0.12); color: var(--success);
-      border: 1px solid rgba(34, 197, 94, 0.25);
-    }
-    .status-badge .dot {
-      width: 6px; height: 6px; border-radius: 50%; background: var(--success);
-      animation: pulse 1.5s infinite;
-    }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
-    .hero { text-align: center; margin-bottom: 28px; }
-    .hero h2 {
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: clamp(1.75rem, 5vw, 2.5rem); font-weight: 700; line-height: 1.15; margin-bottom: 10px;
-    }
-    .hero p { color: var(--muted); font-size: 0.95rem; max-width: 480px; margin: 0 auto; }
-    .search-card {
-      background: var(--card); border: 1px solid var(--border); border-radius: 18px;
-      padding: 22px; box-shadow: 0 18px 45px rgba(0,0,0,0.4);
-    }
-    .search-row { display: flex; gap: 10px; flex-wrap: wrap; }
-    .search-row input {
-      flex: 1; min-width: 180px; background: #0a101f; border: 1px solid var(--border);
-      border-radius: 12px; padding: 14px 16px; color: var(--text); font-size: 1rem;
-      font-family: 'JetBrains Mono', monospace; outline: none;
-    }
-    .search-row input:focus { border-color: var(--primary); }
-    .search-row input::placeholder { color: #5a6a85; }
-    .btn {
-      border: none; border-radius: 12px; padding: 14px 22px; font-weight: 600;
-      font-size: 0.95rem; cursor: pointer; transition: all 0.2s; font-family: inherit;
-    }
-    .btn-primary { background: linear-gradient(135deg, #00e5ff, #00b4d8); color: #001018; }
-    .btn-primary:hover:not(:disabled) { filter: brightness(1.1); transform: translateY(-1px); }
-    .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; }
-    .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
-    .btn-ghost:hover { background: var(--primary-dim); color: var(--primary); }
-    .hint {
-      margin-top: 12px; font-size: 0.78rem; color: var(--muted);
-      display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;
-    }
-    .result-area { margin-top: 26px; min-height: 60px; }
-    .loading { text-align: center; padding: 40px; color: var(--muted); }
-    .spinner {
-      width: 36px; height: 36px; border: 3px solid var(--border);
-      border-top-color: var(--primary); border-radius: 50%;
-      animation: spin 0.7s linear infinite; margin: 0 auto 12px;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .error-box {
-      background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3);
-      color: #fca5a5; padding: 16px 18px; border-radius: 12px; font-size: 0.9rem;
-    }
-    .result-card {
-      background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden;
-    }
-    .result-header {
-      background: linear-gradient(90deg, rgba(0,229,255,0.12), transparent);
-      padding: 16px 20px; border-bottom: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
-    }
-    .result-header h3 { font-family: 'Space Grotesk', sans-serif; font-size: 1.25rem; }
-    .result-body { padding: 20px; }
-    .info-grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-      gap: 12px; margin-bottom: 18px;
-    }
-    .info-item {
-      background: #0a101f; border-radius: 10px; padding: 12px 14px;
-      border: 1px solid rgba(255,255,255,0.04);
-    }
-    .info-item label {
-      display: block; font-size: 0.68rem; text-transform: uppercase;
-      letter-spacing: 0.06em; color: var(--muted); margin-bottom: 4px;
-    }
-    .info-item .val {
-      font-family: 'JetBrains Mono', monospace; font-size: 0.95rem; word-break: break-all;
-    }
-    .section-title {
-      font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.07em;
-      color: var(--primary); margin: 18px 0 10px; font-weight: 600;
-    }
-    .numbers-list { display: flex; flex-wrap: wrap; gap: 8px; }
-    .number-chip {
-      background: var(--primary-dim); border: 1px solid rgba(0,229,255,0.25);
-      color: var(--primary); padding: 7px 12px; border-radius: 8px;
-      font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;
-    }
-    .sim-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-    .sim-table th {
-      text-align: left; padding: 8px 10px; color: var(--muted); font-weight: 500;
-      border-bottom: 1px solid var(--border);
-    }
-    .sim-table td {
-      padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.04);
-      font-family: 'JetBrains Mono', monospace;
-    }
-    .raw-box {
-      margin-top: 16px; background: #060a12; border: 1px solid var(--border);
-      border-radius: 10px; padding: 12px; font-family: 'JetBrains Mono', monospace;
-      font-size: 0.72rem; color: #9ab; max-height: 220px; overflow: auto; white-space: pre-wrap;
-    }
-    footer {
-      margin-top: 44px; text-align: center; padding-top: 22px;
-      border-top: 1px solid var(--border); color: var(--muted); font-size: 0.85rem;
-    }
-    footer strong { color: var(--primary); }
-    .disclaimer { margin-top: 6px; font-size: 0.72rem; opacity: 0.7; }
-    @media (max-width: 520px) {
-      .search-row { flex-direction: column; }
-      .btn { width: 100%; }
-    }
+    body { font-family: system-ui, sans-serif; background: #0d1117; color: #e6edf3; padding: 20px; max-width: 700px; margin: 0 auto; }
+    h1 { color: #00e5ff; font-size: 1.4rem; }
+    input { width: 100%; padding: 12px; font-size: 16px; border-radius: 8px; border: 1px solid #30363d; background: #161b22; color: #fff; margin: 10px 0; }
+    button { padding: 12px 20px; margin: 5px 5px 5px 0; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 15px; }
+    .go { background: #00e5ff; color: #000; }
+    .test { background: #238636; color: #fff; }
+    #log { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 15px; margin-top: 15px; white-space: pre-wrap; font-family: monospace; font-size: 13px; min-height: 120px; }
+    .ok { color: #3fb950; }
+    .err { color: #f85149; }
+    .info { color: #58a6ff; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <div class="logo">
-        <div class="logo-icon">SB</div>
-        <div class="logo-text">
-          <h1>Sajjad Baloch Finder</h1>
-          <span>Pak SIM • CNIC • Vehicle Lookup</span>
-        </div>
-      </div>
-      <div class="status-badge"><span class="dot"></span> API Online</div>
-    </header>
+  <h1>سجاد بلوچ Finder (Debug Mode)</h1>
+  <p>نیچے بٹن دبائیں اور جو لکھا آئے وہ کاپی کر کے مجھے بھیجیں۔</p>
 
-    <section class="hero">
-      <h2>Ultimate Number Finder</h2>
-      <p>Phone Number یا CNIC ڈال کر SIM Owner اور متعلقہ معلومات حاصل کریں۔</p>
-    </section>
+  <input id="q" value="3520212345671" placeholder="CNIC یا فون نمبر">
+  <br>
+  <button class="test" onclick="run('3520212345671')">1. Test CNIC</button>
+  <button class="test" onclick="run('03126238708')">2. Test Phone</button>
+  <button class="go" onclick="run(document.getElementById('q').value)">3. Search</button>
 
-    <div class="search-card">
-      <div class="search-row">
-        <input type="text" id="queryInput" placeholder="0300xxxxxxx  یا  3520212345671" autocomplete="off" spellcheck="false" />
-        <button class="btn btn-ghost" id="testBtn">Test CNIC</button>
-        <button class="btn btn-primary" id="searchBtn">Search</button>
-      </div>
-      <div class="hint">
-        <span>کام کرنے والا مثال: <b>3520212345671</b> یا <b>03126238708</b></span>
-        <span id="coinInfo">Ready</span>
-      </div>
-    </div>
+  <div id="log">تیار ہے... بٹن دبائیں</div>
 
-    <div class="result-area" id="resultArea"></div>
+<script>
+const logEl = document.getElementById("log");
 
-    <footer>
-      <p>Developed by <strong>سجاد بلوچ (Sajjad Baloch)</strong></p>
-      <p class="disclaimer">صرف معلوماتی مقاصد کے لیے۔ تمام قوانین کی پابندی صارف کی ذمہ داری ہے۔</p>
-    </footer>
-  </div>
+function log(msg, type) {
+  const span = document.createElement("div");
+  span.className = type || "";
+  span.textContent = msg;
+  logEl.appendChild(span);
+  logEl.scrollTop = logEl.scrollHeight;
+}
 
-  <script>
-    const API_BASE = "https://identra.janialexa610.workers.dev";
-    const API_KEY  = "identra-client-key-2026";
+function clearLog() {
+  logEl.innerHTML = "";
+}
 
-    function freshSalt() {
-      const arr = new Uint8Array(20);
-      crypto.getRandomValues(arr);
-      return Array.from(arr).map(b => b.toString(16).padStart(2, "0")).join("") + Date.now();
-    }
+async function run(query) {
+  clearLog();
+  const q = (query || "").trim().replace(/[\s\-]/g, "");
+  log("Query: " + q, "info");
+  log("Location: " + location.href, "info");
+  log("Starting fetch...", "info");
 
-    function cleanQuery(q) {
-      return (q || "").trim().replace(/[\s\-]/g, "");
-    }
+  const salt = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+    .map(b => b.toString(16).padStart(2, "0")).join("") + Date.now();
 
-    const input      = document.getElementById("queryInput");
-    const searchBtn  = document.getElementById("searchBtn");
-    const testBtn    = document.getElementById("testBtn");
-    const resultArea = document.getElementById("resultArea");
-    const coinInfo   = document.getElementById("coinInfo");
+  log("Salt: " + salt.slice(0, 20) + "...", "info");
 
-    async function doLookup(rawQuery) {
-      const q = cleanQuery(rawQuery);
-      if (!q) {
-        showError("براہ کرم فون نمبر یا CNIC درج کریں۔");
-        return;
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 20000);
+
+    const res = await fetch(
+      "https://identra.janialexa610.workers.dev/api/lookup?q=" + encodeURIComponent(q),
+      {
+        method: "GET",
+        headers: {
+          "Accept": "application/json",
+          "x-api-key": "identra-client-key-2026",
+          "x-device-salt": salt
+        },
+        signal: controller.signal
       }
+    );
+    clearTimeout(timer);
 
-      setLoading(true);
-      searchBtn.disabled = true;
-      const salt = freshSalt();
+    log("HTTP Status: " + res.status, res.ok ? "ok" : "err");
 
-      try {
-        const res = await fetch(`\( {API_BASE}/api/lookup?q= \){encodeURIComponent(q)}`, {
-          method: "GET",
-          headers: {
-            "Accept": "application/json",
-            "Content-Type": "application/json",
-            "x-api-key": API_KEY,
-            "x-device-salt": salt
-          }
-        });
+    const text = await res.text();
+    log("Response length: " + text.length, "info");
+    log("--- RAW RESPONSE ---", "info");
+    log(text.substring(0, 1500));
 
-        const data = await res.json();
-
-        if (data.userMeta?.remainingCoins !== undefined) {
-          coinInfo.textContent = "Coins: " + data.userMeta.remainingCoins;
-        }
-
-        if (data.error) {
-          showError(data.error);
-          return;
-        }
-
-        if (data.citizen && data.citizen.success) {
-          renderResult(data);
-        } else {
-          showError("کوئی ریکارڈ نہیں ملا۔");
-        }
-      } catch (err) {
-        showError("نیٹ ورک خرابی: " + err.message);
-      } finally {
-        setLoading(false);
-        searchBtn.disabled = false;
-      }
-    }
-
-    function setLoading(on) {
-      if (on) {
-        resultArea.innerHTML = `<div class="loading"><div class="spinner"></div><div>Searching database...</div></div>`;
-      }
-    }
-
-    function showError(msg) {
-      resultArea.innerHTML = `<div class="error-box">${escapeHtml(msg)}</div>`;
-    }
-
-    function renderResult(data) {
-      const c = data.citizen || {};
-      const numbers = c.numbers || [];
-      const sims = c.simRecords || [];
-      const vehicles = data.vehicles || [];
-      const vehicleNotes = data.vehicleNotes || [];
-
-      let html = `
-        <div class="result-card">
-          <div class="result-header">
-            <h3>${escapeHtml(c.name || "Unknown")}</h3>
-            <span class="status-badge"><span class="dot"></span> Found</span>
-          </div>
-          <div class="result-body">
-            <div class="info-grid">
-              <div class="info-item">
-                <label>CNIC</label>
-                <div class="val">${escapeHtml(c.cnic || "—")}</div>
-              </div>
-              <div class="info-item">
-                <label>Address</label>
-                <div class="val">${escapeHtml(c.address || "N/A")}</div>
-              </div>
-              <div class="info-item">
-                <label>Total Numbers</label>
-                <div class="val">${numbers.length}</div>
-              </div>
-              <div class="info-item">
-                <label>Network</label>
-                <div class="val">${escapeHtml(c.network || "—")}</div>
-              </div>
-            </div>`;
-
-      if (numbers.length) {
-        html += `
-          <div class="section-title">Registered Numbers</div>
-          <div class="numbers-list">
-            \( {numbers.map(n => `<span class="number-chip"> \){escapeHtml(n)}</span>`).join("")}
-          </div>`;
-      }
-
-      if (sims.length) {
-        html += `
-          <div class="section-title">SIM Records Detail</div>
-          <div style="overflow-x:auto">
-            <table class="sim-table">
-              <thead><tr><th>Mobile</th><th>Name</th><th>CNIC</th><th>Address</th></tr></thead>
-              <tbody>
-                ${sims.map(s => `
-                  <tr>
-                    <td>${escapeHtml(s.mobile || "—")}</td>
-                    <td>${escapeHtml(s.name || "—")}</td>
-                    <td>${escapeHtml(s.cnic || "—")}</td>
-                    <td>${escapeHtml(s.address || "—")}</td>
-                  </tr>`).join("")}
-              </tbody>
-            </table>
-          </div>`;
-      }
-
-      if (vehicles.length) {
-        html += `
-          <div class="section-title">Vehicles (${vehicles.length})</div>
-          <div style="overflow-x:auto">
-            <table class="sim-table">
-              <thead><tr><th>Details</th></tr></thead>
-              <tbody>
-                \( {vehicles.map(v => `<tr><td> \){escapeHtml(JSON.stringify(v))}</td></tr>`).join("")}
-              </tbody>
-            </table>
-          </div>`;
+    try {
+      const data = JSON.parse(text);
+      if (data.citizen && data.citizen.success) {
+        log("\n✅ SUCCESS: " + data.citizen.name, "ok");
+        log("CNIC: " + data.citizen.cnic, "ok");
+        log("Numbers: " + (data.citizen.numbers || []).join(", "), "ok");
+      } else if (data.error) {
+        log("\n❌ API Error: " + data.error, "err");
       } else {
-        html += `<div class="section-title">Vehicles</div><div style="color:var(--muted);font-size:0.85rem">No vehicle records found.</div>`;
+        log("\n⚠ Unexpected response structure", "err");
       }
-
-      if (vehicleNotes.length) {
-        html += `
-          <div class="section-title">Vehicle Notes</div>
-          <div style="font-size:0.85rem;color:var(--muted)">
-            ${vehicleNotes.map(n => `<div style="margin-bottom:4px">• ${escapeHtml(n)}</div>`).join("")}
-          </div>`;
-      }
-
-      html += `
-            <div class="section-title">Full API Response</div>
-            <div class="raw-box">${escapeHtml(JSON.stringify(data, null, 2))}</div>
-          </div>
-        </div>`;
-
-      resultArea.innerHTML = html;
+    } catch (e) {
+      log("JSON parse failed: " + e.message, "err");
     }
 
-    function escapeHtml(str) {
-      return String(str ?? "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;");
-    }
+  } catch (e) {
+    log("\n❌ FETCH FAILED", "err");
+    log("Error name: " + e.name, "err");
+    log("Error message: " + e.message, "err");
 
-    searchBtn.addEventListener("click", () => doLookup(input.value));
-    input.addEventListener("keydown", e => { if (e.key === "Enter") doLookup(input.value); });
-    testBtn.addEventListener("click", () => {
-      input.value = "3520212345671";
-      doLookup(input.value);
-    });
-  </script>
+    if (e.name === "AbortError") {
+      log("Timeout - request took too long", "err");
+    }
+    if (location.protocol === "file:") {
+      log("\n⚠ آپ file:// سے کھول رہے ہیں۔ یہ اکثر fetch بلاک کرتا ہے۔", "err");
+      log("حل: python -m http.server 8080 چلائیں پھر http://localhost:8080 کھولیں", "err");
+    }
+  }
+}
+</script>
 </body>
 </html>
