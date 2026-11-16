@@ -5,341 +5,391 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Sajjad Baloch Finder</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: system-ui, -apple-system, sans-serif;
-      background: #070b14; color: #e8f0ff; min-height: 100vh;
-      padding: 20px 16px 40px;
-    }
-    .wrap { max-width: 860px; margin: 0 auto; }
-    header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding-bottom: 20px; border-bottom: 1px solid rgba(0,229,255,0.15);
-      margin-bottom: 24px;
-    }
-    .logo { display: flex; align-items: center; gap: 12px; }
-    .logo-icon {
-      width: 44px; height: 44px; border-radius: 12px;
-      background: linear-gradient(135deg, #00e5ff, #0077ff);
-      display: grid; place-items: center; font-weight: 700; color: #000;
-    }
-    .logo h1 { font-size: 1.2rem; }
-    .logo span { font-size: 0.75rem; color: #8b9bb8; }
-    .badge {
-      font-size: 0.7rem; padding: 4px 10px; border-radius: 999px;
-      background: rgba(34,197,94,0.15); color: #22c55e;
-      border: 1px solid rgba(34,197,94,0.3);
-    }
-    h2 { text-align: center; font-size: 1.8rem; margin-bottom: 8px; }
-    .sub { text-align: center; color: #8b9bb8; margin-bottom: 24px; font-size: 0.95rem; }
-    .card {
-      background: #0f1629; border: 1px solid rgba(0,229,255,0.18);
-      border-radius: 16px; padding: 20px; margin-bottom: 20px;
-    }
-    .row { display: flex; gap: 10px; flex-wrap: wrap; }
-    input {
-      flex: 1; min-width: 160px; padding: 14px 16px; border-radius: 12px;
-      border: 1px solid rgba(0,229,255,0.2); background: #0a101f;
-      color: #fff; font-size: 1rem; font-family: monospace; outline: none;
-    }
-    input:focus { border-color: #00e5ff; }
-    button {
-      padding: 14px 20px; border-radius: 12px; border: none;
-      font-weight: 600; font-size: 0.95rem; cursor: pointer;
-    }
-    .btn-go { background: linear-gradient(135deg, #00e5ff, #00b4d8); color: #001018; }
-    .btn-go:disabled { opacity: 0.5; cursor: not-allowed; }
-    .btn-test { background: transparent; color: #8b9bb8; border: 1px solid rgba(0,229,255,0.2); }
-    .hint { margin-top: 10px; font-size: 0.8rem; color: #8b9bb8; }
-    #out { min-height: 40px; }
-    .loading { text-align: center; padding: 30px; color: #8b9bb8; }
-    .err {
-      background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3);
-      color: #fca5a5; padding: 14px 16px; border-radius: 12px;
-    }
-    .result {
-      background: #0f1629; border: 1px solid rgba(0,229,255,0.18);
-      border-radius: 16px; overflow: hidden; margin-bottom: 16px;
-    }
-    .result-top {
-      padding: 16px 18px; border-bottom: 1px solid rgba(0,229,255,0.12);
-      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;
-      background: linear-gradient(90deg, rgba(0,229,255,0.1), transparent);
-    }
-    .result-top h3 { font-size: 1.15rem; }
-    .result-body { padding: 18px; }
-    .grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 10px; margin-bottom: 14px;
-    }
-    .item {
-      background: #0a101f; border-radius: 10px; padding: 11px 12px;
-      border: 1px solid rgba(255,255,255,0.04);
-    }
-    .item label {
-      display: block; font-size: 0.68rem; color: #8b9bb8;
-      text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 3px;
-    }
-    .item .v { font-family: monospace; font-size: 0.9rem; word-break: break-all; }
-    .sec {
-      font-size: 0.75rem; color: #00e5ff; text-transform: uppercase;
-      letter-spacing: 0.06em; margin: 16px 0 8px; font-weight: 600;
-    }
-    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-    .chip {
-      background: rgba(0,229,255,0.12); border: 1px solid rgba(0,229,255,0.25);
-      color: #00e5ff; padding: 6px 12px; border-radius: 8px;
-      font-family: monospace; font-size: 0.85rem;
-    }
-    table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
-    th { text-align: left; padding: 8px; color: #8b9bb8; border-bottom: 1px solid rgba(0,229,255,0.15); }
-    td { padding: 9px 8px; border-bottom: 1px solid rgba(255,255,255,0.04); font-family: monospace; }
-    footer {
-      margin-top: 36px; text-align: center; color: #8b9bb8; font-size: 0.85rem;
-      padding-top: 18px; border-top: 1px solid rgba(0,229,255,0.12);
-    }
-    footer b { color: #00e5ff; }
-    @media (max-width: 500px) {
-      .row { flex-direction: column; }
-      button { width: 100%; }
-    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:system-ui,sans-serif;background:#070b14;color:#e8f0ff;min-height:100vh}
+    .wrap{max-width:900px;margin:0 auto;padding:20px 16px 40px}
+    .hidden{display:none!important}
+    .login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+    .login-box{width:100%;max-width:380px;background:#0f1629;border:1px solid rgba(0,229,255,.2);border-radius:18px;padding:28px}
+    .login-box h1{text-align:center;font-size:1.4rem;margin-bottom:6px}
+    .login-box .sub{text-align:center;color:#8b9bb8;font-size:.85rem;margin-bottom:22px}
+    .login-box label{display:block;font-size:.8rem;color:#8b9bb8;margin-bottom:6px}
+    .login-box input{width:100%;padding:12px 14px;border-radius:10px;border:1px solid rgba(0,229,255,.2);background:#0a101f;color:#fff;font-size:1rem;margin-bottom:14px;outline:none}
+    .login-box button{width:100%;padding:13px;border:none;border-radius:10px;font-weight:600;font-size:1rem;cursor:pointer;background:linear-gradient(135deg,#00e5ff,#00b4d8);color:#001018}
+    .login-err{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#fca5a5;padding:10px 12px;border-radius:8px;font-size:.85rem;margin-bottom:12px;display:none}
+    header{display:flex;align-items:center;justify-content:space-between;padding-bottom:16px;border-bottom:1px solid rgba(0,229,255,.15);margin-bottom:22px;flex-wrap:wrap;gap:10px}
+    .logo{display:flex;align-items:center;gap:12px}
+    .logo-icon{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#00e5ff,#0077ff);display:grid;place-items:center;font-weight:700;color:#000}
+    .logo h1{font-size:1.15rem}
+    .logo span{font-size:.72rem;color:#8b9bb8}
+    .header-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .user-chip{font-size:.8rem;padding:5px 12px;border-radius:999px;background:rgba(0,229,255,.1);color:#00e5ff;border:1px solid rgba(0,229,255,.25)}
+    .btn-sm{padding:7px 14px;border-radius:8px;border:1px solid rgba(0,229,255,.25);background:transparent;color:#8b9bb8;font-size:.8rem;cursor:pointer}
+    .btn-danger{border-color:rgba(239,68,68,.4);color:#f87171}
+    h2{text-align:center;font-size:1.6rem;margin-bottom:6px}
+    .sub{text-align:center;color:#8b9bb8;margin-bottom:20px;font-size:.9rem}
+    .card{background:#0f1629;border:1px solid rgba(0,229,255,.18);border-radius:16px;padding:18px;margin-bottom:18px}
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    .field{flex:1;min-width:140px;padding:12px 14px;border-radius:10px;border:1px solid rgba(0,229,255,.2);background:#0a101f;color:#fff;font-size:.95rem;font-family:monospace;outline:none}
+    .btn-go{padding:12px 18px;border-radius:10px;border:none;font-weight:600;background:linear-gradient(135deg,#00e5ff,#00b4d8);color:#001018;cursor:pointer}
+    .btn-go:disabled{opacity:.5}
+    .loading{text-align:center;padding:28px;color:#8b9bb8}
+    .spinner{width:32px;height:32px;border:3px solid rgba(0,229,255,.2);border-top-color:#00e5ff;border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 12px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .err{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#fca5a5;padding:12px 14px;border-radius:10px;white-space:pre-wrap;line-height:1.5;font-size:.9rem}
+    .warn{background:rgba(234,179,8,.12);border:1px solid rgba(234,179,8,.35);color:#fde68a;padding:12px 14px;border-radius:10px;margin-bottom:14px;font-size:.85rem;line-height:1.5}
+    .result{background:#0f1629;border:1px solid rgba(0,229,255,.18);border-radius:14px;overflow:hidden;margin-bottom:14px}
+    .result-top{padding:14px 16px;border-bottom:1px solid rgba(0,229,255,.12);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;background:linear-gradient(90deg,rgba(0,229,255,.1),transparent)}
+    .result-top h3{font-size:1.1rem}
+    .result-body{padding:16px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}
+    .item{background:#0a101f;border-radius:8px;padding:10px 12px;border:1px solid rgba(255,255,255,.04)}
+    .item label{display:block;font-size:.65rem;color:#8b9bb8;text-transform:uppercase;margin-bottom:3px}
+    .item .v{font-family:monospace;font-size:.88rem;word-break:break-all}
+    .sec{font-size:.72rem;color:#00e5ff;text-transform:uppercase;margin:14px 0 8px;font-weight:600}
+    .chips{display:flex;flex-wrap:wrap;gap:6px}
+    .chip{background:rgba(0,229,255,.12);border:1px solid rgba(0,229,255,.25);color:#00e5ff;padding:5px 10px;border-radius:6px;font-family:monospace;font-size:.82rem}
+    table{width:100%;border-collapse:collapse;font-size:.82rem}
+    th{text-align:left;padding:7px;color:#8b9bb8;border-bottom:1px solid rgba(0,229,255,.15)}
+    td{padding:8px 7px;border-bottom:1px solid rgba(255,255,255,.04);font-family:monospace}
+    footer{margin-top:30px;text-align:center;color:#8b9bb8;font-size:.82rem;padding-top:16px;border-top:1px solid rgba(0,229,255,.12)}
+    footer b{color:#00e5ff}
+    code{background:#0a101f;padding:2px 6px;border-radius:4px;font-size:.8rem}
+    @media(max-width:500px){.row{flex-direction:column}button{width:100%}}
   </style>
 </head>
 <body>
-  <div class="wrap">
+  <div id="loginScreen" class="login-screen">
+    <div class="login-box">
+      <h1>Sajjad Baloch Finder</h1>
+      <p class="sub">Login to continue</p>
+      <div class="login-err" id="loginErr"></div>
+      <label>Username</label>
+      <input type="text" id="loginUser" placeholder="Username" />
+      <label>Password</label>
+      <input type="password" id="loginPass" placeholder="Password" />
+      <button type="button" id="loginBtn">Login</button>
+    </div>
+  </div>
+
+  <div id="appScreen" class="wrap hidden">
     <header>
       <div class="logo">
         <div class="logo-icon">SB</div>
         <div>
           <h1>Sajjad Baloch Finder</h1>
-          <span>Pak SIM • CNIC • Vehicle Lookup</span>
+          <span>Pak SIM • CNIC • Vehicle</span>
         </div>
       </div>
-      <div class="badge">● Online</div>
+      <div class="header-right">
+        <span class="user-chip" id="currentUserLabel"></span>
+        <button class="btn-sm btn-danger" id="logoutBtn" type="button">Logout</button>
+      </div>
     </header>
 
-    <h2>Ultimate Number Finder</h2>
-    <p class="sub">Phone / CNIC / Vehicle Number سے تلاش کریں</p>
-
-    <div class="card">
-      <div class="row">
-        <input id="q" type="text" placeholder="0300xxx | 35202xxx | SLK-0644" />
-        <button class="btn-test" id="testSim">Test SIM</button>
-        <button class="btn-test" id="testVeh">Test Vehicle</button>
-        <button class="btn-go" id="goBtn">Search</button>
-      </div>
-      <div class="hint">SIM: 3520212345671 &nbsp;|&nbsp; Vehicle: SLK-0644</div>
+    <div id="fileWarn" class="warn hidden">
+      <b>Warning:</b> Aap file seedha open kar rahe hain (file://). Is se Search fail ho sakta hai.<br><br>
+      <b>Hal (PC):</b> folder mein ye command chalayein:<br>
+      <code>python -m http.server 8080</code><br>
+      phir browser mein kholen: <code>http://localhost:8080/sajjad-finder.html</code><br><br>
+      <b>Hal (Phone):</b> file ko kisi free host (Netlify Drop / 000webhost) par upload karein.
     </div>
 
-    <div id="out"></div>
+    <div id="searchView">
+      <h2>Ultimate Number Finder</h2>
+      <p class="sub">Phone / CNIC / Vehicle Number se talash karein</p>
+      <div class="card">
+        <div class="row">
+          <input class="field" id="q" type="text" placeholder="0300xxx | 35202xxx | SLK-0644" />
+          <button class="btn-go" id="goBtn" type="button">Search</button>
+        </div>
+      </div>
+      <div id="out"></div>
+    </div>
 
-    <footer>Developed by <b>سجاد بلوچ (Sajjad Baloch)</b></footer>
+    <footer>Developed by <b>Sajjad Baloch</b></footer>
   </div>
 
 <script>
-  const API = "https://identra.janialexa610.workers.dev";
-  const KEY = "identra-client-key-2026";
+(function(){
+  /* =====================================================
+     LOGIN CREDENTIALS — yahan se change karein
+     ===================================================== */
+  var ADMIN_USER = "admin";
+  var ADMIN_PASS = "admin123";
 
-  function salt() {
-    const a = new Uint8Array(16);
+  var USERS = [
+    { username: "user1", password: "pass1" },
+    { username: "user2", password: "pass2" },
+    { username: "ali",   password: "ali123" },
+    { username: "qasim", password: "qasim123" }
+  ];
+  /* ===================================================== */
+
+  var API = "https://identra.janialexa610.workers.dev";
+  var KEY = "identra-client-key-2026";
+  var IDLE_MS = 30 * 60 * 1000;
+  var idleTimer = null;
+  var lastActivity = Date.now();
+  var isFileProto = (location.protocol === "file:");
+
+  function getSession(){
+    try { return JSON.parse(localStorage.getItem("sb_session") || "null"); }
+    catch(e){ return null; }
+  }
+  function setSession(obj){
+    if (obj) localStorage.setItem("sb_session", JSON.stringify(obj));
+    else localStorage.removeItem("sb_session");
+  }
+
+  function touchActivity(){
+    lastActivity = Date.now();
+    var s = getSession();
+    if (s) { s.lastActivity = lastActivity; setSession(s); }
+  }
+  function startIdleWatch(){
+    stopIdleWatch();
+    lastActivity = Date.now();
+    idleTimer = setInterval(function(){
+      if (!getSession()) return;
+      if (Date.now() - lastActivity >= IDLE_MS) {
+        stopIdleWatch();
+        setSession(null);
+        showLogin();
+        showErr("30 minute inactive — auto logout. Dobara login karein.");
+      }
+    }, 15000);
+  }
+  function stopIdleWatch(){
+    if (idleTimer) { clearInterval(idleTimer); idleTimer = null; }
+  }
+
+  function showErr(msg){
+    var el = document.getElementById("loginErr");
+    el.textContent = msg;
+    el.style.display = "block";
+  }
+
+  function showLogin(){
+    document.getElementById("loginScreen").classList.remove("hidden");
+    document.getElementById("appScreen").classList.add("hidden");
+    document.getElementById("loginErr").style.display = "none";
+    document.getElementById("loginUser").value = "";
+    document.getElementById("loginPass").value = "";
+  }
+
+  function showApp(session){
+    document.getElementById("loginScreen").classList.add("hidden");
+    document.getElementById("appScreen").classList.remove("hidden");
+    document.getElementById("currentUserLabel").textContent =
+      session.isAdmin ? ("Admin: " + session.username) : ("User: " + session.username);
+    if (isFileProto) document.getElementById("fileWarn").classList.remove("hidden");
+    touchActivity();
+    startIdleWatch();
+  }
+
+  function doLogin(){
+    var u = (document.getElementById("loginUser").value || "").trim();
+    var p = document.getElementById("loginPass").value || "";
+    if (!u || !p) { showErr("Username aur Password likhein"); return; }
+
+    if (u === ADMIN_USER && p === ADMIN_PASS) {
+      setSession({ username: u, isAdmin: true, lastActivity: Date.now() });
+      showApp(getSession());
+      return;
+    }
+    for (var i = 0; i < USERS.length; i++) {
+      if (USERS[i].username === u && USERS[i].password === p) {
+        setSession({ username: u, isAdmin: false, lastActivity: Date.now() });
+        showApp(getSession());
+        return;
+      }
+    }
+    showErr("Galat username ya password");
+  }
+
+  function doLogout(){
+    stopIdleWatch();
+    setSession(null);
+    showLogin();
+  }
+
+  function salt(){
+    var a = new Uint8Array(16);
     crypto.getRandomValues(a);
-    return Array.from(a).map(b => b.toString(16).padStart(2, "0")).join("") + Date.now();
+    var s = "";
+    for (var i = 0; i < a.length; i++) s += a[i].toString(16).padStart(2, "0");
+    return s + Date.now() + Math.random().toString(36).slice(2);
   }
-
-  function clean(s) {
-    return (s || "").trim().replace(/\s+/g, "");
+  function clean(s){ return (s || "").trim().replace(/\s+/g, ""); }
+  function esc(s){
+    return String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
   }
-
-  function esc(s) {
-    return String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-  }
-
-  function val(v) {
+  function val(v){
     if (v === null || v === undefined || v === "") return "—";
     return esc(String(v));
   }
+  function hasCitizenData(c){
+    if (!c) return false;
+    if (c.success === true) return true;
+    if (c.name || c.cnic || (c.numbers && c.numbers.length) || (c.simRecords && c.simRecords.length)) return true;
+    return false;
+  }
 
-  const out = document.getElementById("out");
-  const qInput = document.getElementById("q");
-  const goBtn = document.getElementById("goBtn");
+  function doSearch(raw, attempt){
+    attempt = attempt || 1;
+    var q = clean(raw);
+    var outEl = document.getElementById("out");
+    if (!q) { outEl.innerHTML = '<div class="err">Number likhein</div>'; return; }
 
-  async function search(raw) {
-    const q = clean(raw);
-    if (!q) {
-      out.innerHTML = '<div class="err">نمبر لکھیں</div>';
-      return;
-    }
+    outEl.innerHTML = '<div class="loading"><div class="spinner"></div>Searching... (try ' + attempt + ')</div>';
+    document.getElementById("goBtn").disabled = true;
 
-    out.innerHTML = '<div class="loading">Searching...</div>';
-    goBtn.disabled = true;
+    var controller = new AbortController();
+    var timer = setTimeout(function(){ controller.abort(); }, 30000);
+    var deviceSalt = salt();
 
-    try {
-      const res = await fetch(
-        API + "/api/lookup?q=" + encodeURIComponent(q),
-        {
-          method: "GET",
-          headers: {
-            "Accept": "application/json",
-            "x-api-key": KEY,
-            "x-device-salt": salt()
-          }
-        }
-      );
-
-      const data = await res.json();
-
+    fetch(API + "/api/lookup?q=" + encodeURIComponent(q), {
+      method: "GET",
+      mode: "cors",
+      cache: "no-store",
+      headers: {
+        "Accept": "application/json",
+        "x-api-key": KEY,
+        "x-device-salt": deviceSalt
+      },
+      signal: controller.signal
+    })
+    .then(function(res){
+      clearTimeout(timer);
+      return res.text().then(function(text){
+        var data;
+        try { data = JSON.parse(text); }
+        catch(e){ throw new Error("API ne galat data bheja (status " + res.status + ")"); }
+        if (!res.ok && data.error) throw new Error(data.error);
+        return data;
+      });
+    })
+    .then(function(data){
+      var errMsg = (data.error || "").toLowerCase();
+      if ((errMsg.indexOf("coin") !== -1 || errMsg.indexOf("insufficient") !== -1) && attempt < 4) {
+        return doSearch(q, attempt + 1);
+      }
       if (data.error) {
-        out.innerHTML = '<div class="err">' + esc(data.error) + '</div>';
+        outEl.innerHTML = '<div class="err">' + esc(data.error) + '</div>';
         return;
       }
 
-      let html = "";
-
-      // Citizen / SIM section
-      if (data.citizen && data.citizen.success) {
-        html += renderCitizen(data);
-      }
-
-      // Vehicles section - FULL details
+      var html = "";
+      if (hasCitizenData(data.citizen)) html += renderCitizen(data);
       if (data.vehicles && data.vehicles.length) {
-        data.vehicles.forEach((v, i) => {
-          html += renderVehicle(v, i);
-        });
+        for (var i = 0; i < data.vehicles.length; i++) html += renderVehicle(data.vehicles[i], i);
       } else if (data.vehicleNotes && data.vehicleNotes.length) {
-        html += `
-          <div class="result">
-            <div class="result-top"><h3>Vehicle Notes</h3></div>
-            <div class="result-body" style="font-size:0.9rem;color:#8b9bb8">
-              ${data.vehicleNotes.map(n => "<div>• " + esc(n) + "</div>").join("")}
-              <div style="margin-top:10px;font-size:0.8rem">
-                مکمل گاڑی کی تفصیل کے لیے Registration Number لکھیں (جیسے SLK-0644)
-              </div>
-            </div>
-          </div>`;
+        html += '<div class="result"><div class="result-top"><h3>Vehicle Notes</h3></div><div class="result-body" style="font-size:.88rem;color:#8b9bb8">';
+        for (var n = 0; n < data.vehicleNotes.length; n++) html += "<div>• " + esc(data.vehicleNotes[n]) + "</div>";
+        html += '</div></div>';
       }
-
-      if (!html) {
-        html = '<div class="err">کوئی ریکارڈ نہیں ملا</div>';
+      outEl.innerHTML = html || '<div class="err">Koi record nahi mila</div>';
+    })
+    .catch(function(e){
+      clearTimeout(timer);
+      var detail = "";
+      if (e.name === "AbortError") {
+        detail = "Timeout (30s) — internet slow ya API band.";
+      } else {
+        detail = (e.message || "Network failed");
       }
-
-      out.innerHTML = html;
-    } catch (e) {
-      out.innerHTML = '<div class="err">Error: ' + esc(e.message) + '</div>';
-    } finally {
-      goBtn.disabled = false;
-    }
+      var help = "";
+      if (isFileProto) {
+        help = "\n\nASAL MASLA: file:// se open kiya hai.\n\nPC par:\n1) HTML wali folder kholen\n2) Terminal: python -m http.server 8080\n3) Browser: http://localhost:8080/sajjad-finder.html\n\nPhone par: file ko Netlify Drop / free host par upload karein.";
+      } else {
+        help = "\n\nCheck karein:\n• Internet on hai?\n• VPN band/on try karein\n• workers.dev block to nahi?";
+      }
+      outEl.innerHTML = '<div class="err">Fetch Error: ' + esc(detail) + esc(help) + '</div>';
+    })
+    .finally(function(){
+      document.getElementById("goBtn").disabled = false;
+    });
   }
 
-  function renderCitizen(data) {
-    const c = data.citizen;
-    const numbers = c.numbers || [];
-    const sims = c.simRecords || [];
-
-    let html = `
-      <div class="result">
-        <div class="result-top">
-          <h3>${esc(c.name || "Unknown")}</h3>
-          <span class="badge">SIM / CNIC Found</span>
-        </div>
-        <div class="result-body">
-          <div class="grid">
-            <div class="item"><label>CNIC</label><div class="v">${val(c.cnic)}</div></div>
-            <div class="item"><label>Address</label><div class="v">${val(c.address)}</div></div>
-            <div class="item"><label>Total Numbers</label><div class="v">${numbers.length}</div></div>
-          </div>`;
-
+  function renderCitizen(data){
+    var c = data.citizen || {};
+    var numbers = c.numbers || [];
+    var sims = c.simRecords || [];
+    var html = '<div class="result"><div class="result-top"><h3>' + esc(c.name || "Unknown") + '</h3></div><div class="result-body"><div class="grid">';
+    html += '<div class="item"><label>CNIC</label><div class="v">' + val(c.cnic) + '</div></div>';
+    html += '<div class="item"><label>Address</label><div class="v">' + val(c.address) + '</div></div>';
+    html += '<div class="item"><label>Numbers</label><div class="v">' + numbers.length + '</div></div>';
+    if (c.network) html += '<div class="item"><label>Network</label><div class="v">' + val(c.network) + '</div></div>';
+    html += '</div>';
     if (numbers.length) {
-      html += `
-        <div class="sec">Registered Numbers</div>
-        <div class="chips">
-          ${numbers.map(n => '<span class="chip">' + esc(n) + '</span>').join("")}
-        </div>`;
+      html += '<div class="sec">Registered Numbers</div><div class="chips">';
+      for (var i = 0; i < numbers.length; i++) html += '<span class="chip">' + esc(numbers[i]) + '</span>';
+      html += '</div>';
     }
-
     if (sims.length) {
-      html += `
-        <div class="sec">SIM Details</div>
-        <div style="overflow-x:auto">
-          <table>
-            <thead><tr><th>Mobile</th><th>Name</th><th>CNIC</th><th>Address</th></tr></thead>
-            <tbody>
-              ${sims.map(s => `
-                <tr>
-                  <td>${val(s.mobile)}</td>
-                  <td>${val(s.name)}</td>
-                  <td>${val(s.cnic)}</td>
-                  <td>${val(s.address)}</td>
-                </tr>`).join("")}
-            </tbody>
-          </table>
-        </div>`;
+      html += '<div class="sec">SIM Details</div><div style="overflow-x:auto"><table><thead><tr><th>Mobile</th><th>Name</th><th>CNIC</th><th>Network</th><th>Address</th></tr></thead><tbody>';
+      for (var j = 0; j < sims.length; j++) {
+        var s = sims[j];
+        html += '<tr><td>' + val(s.mobile) + '</td><td>' + val(s.name) + '</td><td>' + val(s.cnic) + '</td><td>' + val(s.network) + '</td><td>' + val(s.address) + '</td></tr>';
+      }
+      html += '</tbody></table></div>';
     }
-
-    html += `</div></div>`;
-    return html;
+    return html + '</div></div>';
   }
 
-  function renderVehicle(v, index) {
-    // Important fields to show in a clean way
-    const fields = [
-      ["Registration No", v.registrationNumber],
-      ["Owner Name", v.ownerName],
-      ["Father Name", v.ownerFathersName],
-      ["Owner CNIC", v.ownerCNIC],
-      ["Owner Address", v.ownerAddress],
-      ["Owner Type", v.ownerType],
-      ["Manufacturer", v.manufacturerName],
-      ["Model", v.modelName],
-      ["Model Year", v.modelYear || v.manufacturingYear],
-      ["Vehicle Type", v.vehicleType],
-      ["Category", v.vehicleCategoryName || v._CATEGORY_],
-      ["Color", v.color],
-      ["Engine No", v.engineNumber],
-      ["Chassis No", v.chassisNumber],
+  function renderVehicle(v, index){
+    var fields = [
+      ["Registration No", v.registrationNumber], ["Owner Name", v.ownerName],
+      ["Father Name", v.ownerFathersName], ["Owner CNIC", v.ownerCNIC],
+      ["Owner Address", v.ownerAddress], ["Owner Type", v.ownerType],
+      ["Manufacturer", v.manufacturerName], ["Model", v.modelName],
+      ["Model Year", v.modelYear || v.manufacturingYear], ["Vehicle Type", v.vehicleType],
+      ["Category", v.vehicleCategoryName || v._CATEGORY_], ["Color", v.color],
+      ["Engine No", v.engineNumber], ["Chassis No", v.chassisNumber],
       ["Engine Capacity", v.engineCapacity ? v.engineCapacity + " CC" : null],
-      ["Fuel Type", v.fuelType],
-      ["Seats", v.numberOfSeats],
-      ["Tyres", v.numberofTyres],
-      ["Province", v.provinceName],
-      ["District", v.districtName],
-      ["Division", v.divisionName],
-      ["Branch", v.branchName],
-      ["CPLC Status", v.cplcStatus],
-      ["Last Tax Paid", v.lastTaxPaid],
-      ["Registration Updated", v.vehicleRegistrationUpdatedDate],
-      ["Status", v.statusDescription]
+      ["Fuel Type", v.fuelType], ["Seats", v.numberOfSeats], ["Tyres", v.numberofTyres],
+      ["Province", v.provinceName], ["District", v.districtName],
+      ["Division", v.divisionName], ["Branch", v.branchName],
+      ["CPLC Status", v.cplcStatus], ["Last Tax Paid", v.lastTaxPaid],
+      ["Reg. Updated", v.vehicleRegistrationUpdatedDate], ["Status", v.statusDescription]
     ];
-
-    const items = fields
-      .filter(([_, val]) => val !== null && val !== undefined && val !== "")
-      .map(([label, value]) => `
-        <div class="item">
-          <label>${esc(label)}</label>
-          <div class="v">${esc(String(value))}</div>
-        </div>`).join("");
-
-    return `
-      <div class="result">
-        <div class="result-top">
-          <h3>Vehicle ${v.registrationNumber || ("#" + (index + 1))}</h3>
-          <span class="badge">${esc(v.cplcStatus || v._CATEGORY_ || "Vehicle")}</span>
-        </div>
-        <div class="result-body">
-          <div class="grid">${items}</div>
-        </div>
-      </div>`;
+    var items = "";
+    for (var i = 0; i < fields.length; i++) {
+      var label = fields[i][0], value = fields[i][1];
+      if (value !== null && value !== undefined && value !== "")
+        items += '<div class="item"><label>' + esc(label) + '</label><div class="v">' + esc(String(value)) + '</div></div>';
+    }
+    return '<div class="result"><div class="result-top"><h3>Vehicle ' + esc(v.registrationNumber || ("#" + (index+1))) +
+      '</h3></div><div class="result-body"><div class="grid">' + items + '</div></div></div>';
   }
 
-  document.getElementById("goBtn").onclick = () => search(qInput.value);
-  document.getElementById("testSim").onclick = () => {
-    qInput.value = "3520212345671";
-    search("3520212345671");
+  document.getElementById("loginBtn").onclick = doLogin;
+  document.getElementById("loginPass").onkeydown = function(e){ if (e.key === "Enter") doLogin(); };
+  document.getElementById("loginUser").onkeydown = function(e){ if (e.key === "Enter") doLogin(); };
+  document.getElementById("logoutBtn").onclick = doLogout;
+  document.getElementById("goBtn").onclick = function(){ doSearch(document.getElementById("q").value); };
+  document.getElementById("q").onkeydown = function(e){
+    if (e.key === "Enter") doSearch(document.getElementById("q").value);
   };
-  document.getElementById("testVeh").onclick = () => {
-    qInput.value = "SLK-0644";
-    search("SLK-0644");
-  };
-  qInput.onkeydown = (e) => { if (e.key === "Enter") search(qInput.value); };
+
+  ["click", "keydown", "touchstart", "mousemove", "scroll"].forEach(function(ev){
+    document.addEventListener(ev, touchActivity, { passive: true });
+  });
+
+  var session = getSession();
+  if (session) {
+    if (session.lastActivity && (Date.now() - session.lastActivity >= IDLE_MS)) {
+      setSession(null);
+      showLogin();
+      showErr("Session expire — dobara login karein.");
+    } else {
+      showApp(session);
+    }
+  } else {
+    showLogin();
+  }
+})();
 </script>
 </body>
 </html>
